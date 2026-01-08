@@ -3,7 +3,7 @@ permissions:
   contents: write
 on:
   schedule:
-    - cron: "0 0 * * *" # Midnight daily
+    - cron: "30 18 * * *"
   workflow_dispatch:
 
 jobs:
@@ -25,7 +25,7 @@ jobs:
         env:
           AL_TOKEN: ${{ secrets.AL_TOKEN }}
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
-        run: python dantotsu_manager.py
+        run: python main.py
 
       - name: Commit and Push
         run: |
