@@ -1,0 +1,36 @@
+name: Daily Comment Sync
+permissions:
+  contents: write
+on:
+  schedule:
+    - cron: "0 0 * * *" # Midnight daily
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install requests pandas
+
+      - name: Run Sync
+        env:
+          AL_TOKEN: ${{ secrets.AL_TOKEN }}
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+        run: python dantotsu_manager.py
+
+      - name: Commit and Push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add dantotsu_global_db.csv
+          git commit -m "chore: daily database sync [skip ci]" || echo "No changes"
+          git push
