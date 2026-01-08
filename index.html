@@ -3,160 +3,63 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Dantotsu Comment Archive - Live Database Mirror" />
-  <link rel="icon" type="image/x-icon" href="https://files.catbox.moe/6fax26.png" />
-  <title>Dantotsu Archive</title>
+  <title>Dantotsu Comment Archive</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
   <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #0b0e14; /* Dark theme to match Dantotsu */
-      color: #e0e0e0;
-      padding: 20px;
-    }
-    .header {
-      background: #151921;
-      padding: 20px;
-      margin-bottom: 20px;
-      border-radius: 8px;
-      border: 1px solid #232935;
-    }
-    .controls {
-      display: flex;
-      justify-content: space-between;
-      gap: 15px;
-      margin-bottom: 20px;
-    }
-    input, select {
-      background: #151921;
-      border: 1px solid #232935;
-      color: white;
-      padding: 10px;
-      border-radius: 4px;
-    }
-    .search-box { flex: 1; }
-    .table-container {
-      background: #151921;
-      border-radius: 8px;
-      overflow-x: auto;
-      border: 1px solid #232935;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-    th {
-      background: #1c222d;
-      padding: 12px;
-      text-align: left;
-      position: sticky;
-      top: 0;
-      border-bottom: 2px solid #232935;
-    }
-    td {
-      padding: 12px;
-      border-bottom: 1px solid #232935;
-      max-width: 300px;
-      word-wrap: break-word;
-    }
-    .mod-badge { color: #ff9800; font-weight: bold; font-size: 10px; border: 1px solid #ff9800; padding: 2px 4px; border-radius: 3px; margin-left: 5px; }
-    .deleted { opacity: 0.5; font-style: italic; color: #ff5252; }
-    .pfp { width: 30px; height: 30px; border-radius: 50%; vertical-align: middle; margin-right: 10px; }
+    body { font-family: sans-serif; background: #0b0e14; color: #e0e0e0; padding: 20px; }
+    .header { background: #151921; padding: 20px; border-radius: 8px; border: 1px solid #232935; margin-bottom: 20px; }
+    input { background: #151921; border: 1px solid #232935; color: white; padding: 10px; width: 100%; border-radius: 4px; }
+    .table-container { background: #151921; border-radius: 8px; border: 1px solid #232935; margin-top: 20px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: #1c222d; padding: 12px; text-align: left; border-bottom: 2px solid #232935; }
+    td { padding: 12px; border-bottom: 1px solid #232935; }
+    .mod-badge { color: #ff9800; font-weight: bold; border: 1px solid #ff9800; padding: 2px 4px; border-radius: 3px; font-size: 10px; }
+    .deleted { opacity: 0.4; color: #ff5252; text-decoration: line-through; }
     .link { color: #3dbbee; text-decoration: none; }
   </style>
 </head>
 <body>
-
   <div class="header">
     <h1>Dantotsu Comment Archive</h1>
-    <p>Live mirror of global comments. Total records: <span id="recordCount">0</span></p>
+    <p>Live Database Mirror | Total: <span id="count">0</span></p>
+    <input type="text" id="search" placeholder="Search content, users, or Media ID..." />
   </div>
-
-  <div class="controls">
-    <input type="text" id="searchInput" class="search-box" placeholder="Search by username, content, or Media ID..." />
-    <select id="rowsPerPage">
-      <option value="50">50 rows</option>
-      <option value="100">100 rows</option>
-      <option value="500">500 rows</option>
-    </select>
-  </div>
-
   <div class="table-container">
-    <table id="commentTable">
+    <table>
       <thead>
-        <tr>
-          <th>ID</th>
-          <th>User</th>
-          <th>Media</th>
-          <th>Comment</th>
-          <th>Votes</th>
-          <th>Date</th>
-        </tr>
+        <tr><th>ID</th><th>User</th><th>Media</th><th>Comment</th><th>Votes</th></tr>
       </thead>
-      <tbody id="tableBody">
-        </tbody>
+      <tbody id="body"></tbody>
     </table>
   </div>
-
   <script>
-    let allData = [];
-
-    async function loadData() {
-      const response = await fetch('dantotsu_global_db.csv');
-      const csvText = await response.text();
-      
-      Papa.parse(csvText, {
-        header: true,
-        delimiter: "\t",
-        skipEmptyLines: true,
-        complete: (results) => {
-          allData = results.data.reverse(); // Newest first
-          document.getElementById('recordCount').innerText = allData.length;
-          renderTable(allData.slice(0, 50));
-        }
-      });
+    let raw = [];
+    async function init() {
+      const res = await fetch('dantotsu_global_db.csv');
+      const text = await res.text();
+      Papa.parse(text, { header: true, delimiter: "\t", skipEmptyLines: true, complete: (r) => {
+        raw = r.data.reverse();
+        document.getElementById('count').innerText = raw.length;
+        render(raw.slice(0, 100));
+      }});
     }
-
-    function renderTable(data) {
-      const tbody = document.getElementById('tableBody');
-      tbody.innerHTML = '';
-
-      data.forEach(row => {
-        const tr = document.createElement('tr');
-        if (row.deleted == "1") tr.classList.add('deleted');
-
-        const isMod = row.is_mod == "1" || row.is_admin == "1";
-        const badge = isMod ? '<span class="mod-badge">MOD</span>' : '';
-        const pfp = row.profile_picture_url !== "NULL" ? row.profile_picture_url : 'https://s4.anilist.co/file/anilistcdn/user/avatar/large/default.png';
-
-        tr.innerHTML = `
-          <td>${row.comment_id}</td>
-          <td>
-            <img src="${pfp}" class="pfp">
-            <strong>${row.username}</strong>${badge}
-          </td>
-          <td><a class="link" href="https://anilist.co/anime/${row.media_id}" target="_blank">${row.media_id}</a></td>
-          <td>${row.content}</td>
-          <td>↑${row.upvotes} ↓${row.downvotes}</td>
-          <td>${new Date(row.timestamp * 1000).toLocaleDateString()}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+    function render(data) {
+      const b = document.getElementById('body');
+      b.innerHTML = data.map(r => `
+        <tr class="${r.deleted == '1' ? 'deleted' : ''}">
+          <td>${r.comment_id}</td>
+          <td><strong>${r.username}</strong> ${r.is_mod == '1' ? '<span class="mod-badge">MOD</span>' : ''}</td>
+          <td><a class="link" href="https://anilist.co/anime/${r.media_id}" target="_blank">${r.media_id}</a></td>
+          <td>${r.content}</td>
+          <td>↑${r.upvotes}</td>
+        </tr>`).join('');
     }
-
-    // Search Logic
-    document.getElementById('searchInput').addEventListener('input', (e) => {
-      const term = e.target.value.toLowerCase();
-      const filtered = allData.filter(r => 
-        r.username.toLowerCase().includes(term) || 
-        r.content.toLowerCase().includes(term) || 
-        r.media_id.includes(term)
-      );
-      renderTable(filtered.slice(0, document.getElementById('rowsPerPage').value));
+    document.getElementById('search').addEventListener('input', (e) => {
+      const t = e.target.value.toLowerCase();
+      const f = raw.filter(r => r.username.toLowerCase().includes(t) || r.content.toLowerCase().includes(t) || r.media_id.includes(t));
+      render(f.slice(0, 100));
     });
-
-    loadData();
+    init();
   </script>
 </body>
 </html>
