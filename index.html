@@ -3,62 +3,121 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dantotsu Comment Archive</title>
+  <title>Dantotsu Forensic Archive</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
   <style>
     body { font-family: sans-serif; background: #0b0e14; color: #e0e0e0; padding: 20px; }
     .header { background: #151921; padding: 20px; border-radius: 8px; border: 1px solid #232935; margin-bottom: 20px; }
     input { background: #151921; border: 1px solid #232935; color: white; padding: 10px; width: 100%; border-radius: 4px; }
-    .table-container { background: #151921; border-radius: 8px; border: 1px solid #232935; margin-top: 20px; overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th { background: #1c222d; padding: 12px; text-align: left; border-bottom: 2px solid #232935; }
-    td { padding: 12px; border-bottom: 1px solid #232935; }
-    .mod-badge { color: #ff9800; font-weight: bold; border: 1px solid #ff9800; padding: 2px 4px; border-radius: 3px; font-size: 10px; }
-    .deleted { opacity: 0.4; color: #ff5252; text-decoration: line-through; }
+    
+    /* Horizontal scroll for 17 columns */
+    .table-container { 
+        background: #151921; 
+        border-radius: 8px; 
+        border: 1px solid #232935; 
+        margin-top: 20px; 
+        overflow-x: auto; /* Forces horizontal scroll */
+        max-width: 100%;
+    }
+    
+    table { width: 100%; border-collapse: collapse; font-size: 11px; white-space: nowrap; }
+    th { background: #1c222d; padding: 10px; text-align: left; border-bottom: 2px solid #333; position: sticky; left: 0; }
+    td { padding: 8px 10px; border-bottom: 1px solid #232935; }
+    
+    /* Sticky IDs so you don't lose track when scrolling right */
+    .sticky-col { position: sticky; left: 0; background: #151921; z-index: 5; border-right: 2px solid #333; }
+    
+    .mod-badge { color: #ff9800; font-weight: bold; border: 1px solid #ff9800; padding: 1px 3px; border-radius: 3px; font-size: 9px; }
+    .deleted-row { opacity: 0.5; color: #ff5252; background: #2a1515 !important; }
     .link { color: #3dbbee; text-decoration: none; }
+    tr:hover { background: #1c222d; }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1>Dantotsu Comment Archive</h1>
-    <p>Live Database Mirror | Total: <span id="count">0</span></p>
-    <input type="text" id="search" placeholder="Search content, users, or Media ID..." />
+    <h1>Dantotsu Global Archive</h1>
+    <p>Forensic 17-Column Sync | Total Comments: <span id="count">0</span></p>
+    <input type="text" id="search" placeholder="Filter content, usernames, or media IDs..." />
   </div>
+
   <div class="table-container">
-    <table>
-      <thead>
-        <tr><th>ID</th><th>User</th><th>Media</th><th>Comment</th><th>Votes</th></tr>
-      </thead>
-      <tbody id="body"></tbody>
+    <table id="mainTable">
+      <thead id="thead"></thead>
+      <tbody id="tbody"></tbody>
     </table>
   </div>
+
   <script>
-    let raw = [];
+    let rawData = [];
+    const headers = [
+        'comment_id', 'user_id', 'media_id', 'parent_comment_id', 'content', 
+        'timestamp', 'deleted', 'tag', 'upvotes', 'downvotes', 
+        'user_vote_type', 'username', 'profile_picture_url', 
+        'is_mod', 'is_admin', 'reply_count', 'total_votes'
+    ];
+
     async function init() {
       const res = await fetch('dantotsu_global_db.csv');
       const text = await res.text();
-      Papa.parse(text, { header: true, delimiter: "\t", skipEmptyLines: true, complete: (r) => {
-        raw = r.data.reverse();
-        document.getElementById('count').innerText = raw.length;
-        render(raw.slice(0, 100));
-      }});
+      
+      Papa.parse(text, { 
+        header: true, 
+        delimiter: "\t", 
+        skipEmptyLines: true, 
+        complete: (results) => {
+            // Sort newest first for the website
+            rawData = results.data.sort((a, b) => b.comment_id - a.comment_id);
+            document.getElementById('count').innerText = rawData.length;
+            renderHeaders();
+            renderTable(rawData.slice(0, 100));
+        }
+      });
     }
-    function render(data) {
-      const b = document.getElementById('body');
-      b.innerHTML = data.map(r => `
-        <tr class="${r.deleted == '1' ? 'deleted' : ''}">
-          <td>${r.comment_id}</td>
-          <td><strong>${r.username}</strong> ${r.is_mod == '1' ? '<span class="mod-badge">MOD</span>' : ''}</td>
-          <td><a class="link" href="https://anilist.co/anime/${r.media_id}" target="_blank">${r.media_id}</a></td>
-          <td>${r.content}</td>
-          <td>↑${r.upvotes}</td>
-        </tr>`).join('');
+
+    function renderHeaders() {
+        const head = document.getElementById('thead');
+        head.innerHTML = `<tr>${headers.map(h => `<th class="${h === 'comment_id' ? 'sticky-col' : ''}">${h.replace(/_/g, ' ').toUpperCase()}</th>`).join('')}</tr>`;
     }
+
+    function renderTable(data) {
+      const body = document.getElementById('tbody');
+      body.innerHTML = data.map(row => {
+        const isDeleted = row.deleted === '1';
+        const isMod = row.is_mod === '1' || row.is_admin === '1';
+        
+        return `
+          <tr class="${isDeleted ? 'deleted-row' : ''}">
+            <td class="sticky-col"><strong>${row.comment_id}</strong></td>
+            <td>${row.user_id}</td>
+            <td><a class="link" href="https://anilist.co/anime/${row.media_id}" target="_blank">${row.media_id}</a></td>
+            <td>${row.parent_comment_id}</td>
+            <td style="white-space: normal; min-width: 250px;">${row.content}</td>
+            <td>${new Date(row.timestamp * 1000).toLocaleString()}</td>
+            <td>${row.deleted}</td>
+            <td>${row.tag}</td>
+            <td>${row.upvotes}</td>
+            <td>${row.downvotes}</td>
+            <td>${row.user_vote_type}</td>
+            <td><strong>${row.username}</strong> ${isMod ? '<span class="mod-badge">MOD</span>' : ''}</td>
+            <td><a class="link" href="${row.profile_picture_url}" target="_blank">View</a></td>
+            <td>${row.is_mod}</td>
+            <td>${row.is_admin}</td>
+            <td>${row.reply_count}</td>
+            <td>${row.total_votes}</td>
+          </tr>`;
+      }).join('');
+    }
+
     document.getElementById('search').addEventListener('input', (e) => {
       const t = e.target.value.toLowerCase();
-      const f = raw.filter(r => r.username.toLowerCase().includes(t) || r.content.toLowerCase().includes(t) || r.media_id.includes(t));
-      render(f.slice(0, 100));
+      const filtered = rawData.filter(r => 
+        (r.content && r.content.toLowerCase().includes(t)) || 
+        (r.username && r.username.toLowerCase().includes(t)) || 
+        (r.media_id && r.media_id.includes(t))
+      );
+      renderTable(filtered.slice(0, 100));
     });
+
     init();
   </script>
 </body>
