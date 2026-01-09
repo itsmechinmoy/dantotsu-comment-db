@@ -8,23 +8,36 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
-    body { font-family: sans-serif; background: #0b0e14; color: #e0e0e0; padding: 20px; margin: 0; }
-    .header { background: #151921; padding: 20px; border-radius: 8px; border: 1px solid #232935; margin-bottom: 20px; }
+    /* Prevent the whole page from scrolling by making it fit the screen height */
+    html, body { 
+        height: 100%; 
+        margin: 0; 
+        padding: 0; 
+        overflow: hidden; 
+        background: #0b0e14;
+        display: flex;
+        flex-direction: column;
+    }
+
+    body { padding: 20px; box-sizing: border-box; font-family: sans-serif; color: #e0e0e0; }
+
+    .header { background: #151921; padding: 20px; border-radius: 8px; border: 1px solid #232935; margin-bottom: 20px; flex-shrink: 0; }
     
     .controls { display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap; }
     input { background: #151921; border: 1px solid #232935; color: white; padding: 10px; flex-grow: 1; border-radius: 4px; }
     select { background: #1c222d; color: white; border: 1px solid #232935; padding: 10px; border-radius: 4px; cursor: pointer; }
 
-    /* UI Fix: Sticky headers require the container to allow overflow to reach the body */
+    /* UI Fix: Fixed height container makes the table scroll inside while headers stay put */
     .table-container { 
         background: #151921; 
         border-radius: 8px; 
         border: 1px solid #232935; 
         width: 100%; 
-        overflow-x: auto; /* Allows horizontal scroll */
-        overflow-y: visible; /* CRITICAL: Allows sticky th to "see" the page scroll */
+        flex-grow: 1; /* Fills remaining screen space */
+        overflow: auto; /* Handles both vertical and horizontal scroll */
         -ms-overflow-style: none;  
         scrollbar-width: none;  
+        position: relative;
     }
 
     .table-container::-webkit-scrollbar {
@@ -40,13 +53,16 @@
         border-bottom: 2px solid #333; 
         padding: 8px 10px;
         position: sticky; 
-        top: 0; /* Sticks to top of browser window */
-        z-index: 10; 
+        top: 0; /* Sticks to top of table-container */
+        z-index: 20; 
         white-space: nowrap; 
     }
     
     td { padding: 8px 10px; border: 1px solid #232935; word-break: break-word; }
     
+    /* Mobile fix for User ID column spacing */
+    .col-user-id { min-width: 90px; white-space: nowrap; }
+
     .mod-badge { color: #ff9800; font-weight: bold; border: 1px solid #ff9800; padding: 1px 3px; border-radius: 3px; font-size: 9px; }
     .deleted-row { opacity: 0.6; background: #2a1515 !important; }
     .link { color: #3dbbee; text-decoration: none; font-weight: bold; }
@@ -113,12 +129,12 @@
     </div>
   </div>
 
-  <div class="table-container">
+  <div class="table-container" id="scrollContainer">
     <table id="mainTable">
       <thead>
         <tr>
             <th>COMMENT ID</th>
-            <th>USER ID</th>
+            <th class="col-user-id">USER ID</th>
             <th>MEDIA ID</th>
             <th>REPLIED TO</th>
             <th class="col-content">CONTENT</th>
@@ -184,7 +200,7 @@
         return `
           <tr class="${isDeleted ? 'deleted-row' : ''}">
             <td><strong>${row.comment_id}</strong></td>
-            <td><a class="link" href="https://anilist.co/user/${row.user_id}" target="_blank">${row.user_id}</a></td>
+            <td class="col-user-id"><a class="link" href="https://anilist.co/user/${row.user_id}" target="_blank">${row.user_id}</a></td>
             <td><a class="link" href="https://anilist.co/anime/${row.media_id}" target="_blank">${row.media_id}</a></td>
             <td>${row.parent_comment_id || ''}</td>
             <td class="col-content">${formattedContent}</td>
@@ -223,9 +239,12 @@
         renderTable(filtered);
     }
 
+    // Scroll handling for Back to Top button updated for internal container
     const topBtn = document.getElementById("backToTop");
-    window.onscroll = function() {
-      if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+    const scrollContainer = document.getElementById("scrollContainer");
+
+    scrollContainer.onscroll = function() {
+      if (scrollContainer.scrollTop > 300) {
         topBtn.style.display = "flex";
       } else {
         topBtn.style.display = "none";
@@ -233,7 +252,7 @@
     };
 
     topBtn.onclick = function() {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     document.getElementById('search').addEventListener('input', updateView);
