@@ -277,11 +277,19 @@
         const formattedContent = marked.parse(row.content || "");
         const parentId = row.parent_comment_id;
         
-        // Handle both Unix Timestamp (numbers) and ISO String (dates from new CSV)
+        // Custom Date Format: DD/MM/YYYY, HH:MM:SS
         let displayDate = "N/A";
         if (row.timestamp) {
             const dateObj = isNaN(row.timestamp) ? new Date(row.timestamp) : new Date(row.timestamp * 1000);
-            displayDate = dateObj.toLocaleString();
+            displayDate = dateObj.toLocaleString('en-GB', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit',
+                hour12: false 
+            });
         }
         
         return `
