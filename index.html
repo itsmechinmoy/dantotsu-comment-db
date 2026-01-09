@@ -11,31 +11,53 @@
   <meta property="og:image:height" content="876">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
   <style>
-    body { font-family: sans-serif; background: #0b0e14; color: #e0e0e0; padding: 20px; }
+    body { font-family: sans-serif; background: #0b0e14; color: #e0e0e0; padding: 20px; margin: 0; }
     .header { background: #151921; padding: 20px; border-radius: 8px; border: 1px solid #232935; margin-bottom: 20px; }
-    input { background: #151921; border: 1px solid #232935; color: white; padding: 10px; width: 100%; border-radius: 4px; }
+    input { background: #151921; border: 1px solid #232935; color: white; padding: 10px; width: 100%; border-radius: 4px; box-sizing: border-box; }
     
-    /* Horizontal scroll for 17 columns */
+    /* UI Adjustments: Remove forced horizontal scroll, allow fitting to screen */
     .table-container { 
         background: #151921; 
         border-radius: 8px; 
         border: 1px solid #232935; 
-        margin-top: 20px; 
-        overflow-x: auto; /* Forces horizontal scroll */
-        max-width: 100%;
+        margin-top: 20px;
+        width: 100%;
+        overflow-x: hidden; /* Prevent horizontal scroll on PC */
     }
     
-    table { width: 100%; border-collapse: collapse; font-size: 11px; white-space: nowrap; }
-    th { background: #1c222d; padding: 10px; text-align: left; border-bottom: 2px solid #333; position: sticky; left: 0; }
-    td { padding: 8px 10px; border-bottom: 1px solid #232935; }
-    
-    /* Sticky IDs so you don't lose track when scrolling right */
-    .sticky-col { position: sticky; left: 0; background: #151921; z-index: 5; border-right: 2px solid #333; }
+    table { 
+        width: 100%; 
+        border-collapse: collapse; 
+        font-size: 11px; 
+        table-layout: auto; /* Allows table to fit within screen width */
+    }
+
+    th, td { 
+        padding: 8px 10px; 
+        border: 1px solid #232935; /* Borders between every column */
+        word-break: break-word; /* Ensure text wraps to fit screen */
+    }
+
+    th { background: #1c222d; text-align: left; border-bottom: 2px solid #333; }
     
     .mod-badge { color: #ff9800; font-weight: bold; border: 1px solid #ff9800; padding: 1px 3px; border-radius: 3px; font-size: 9px; }
     .deleted-row { opacity: 0.5; color: #ff5252; background: #2a1515 !important; }
-    .link { color: #3dbbee; text-decoration: none; }
+    .link { color: #3dbbee; text-decoration: none; font-weight: bold; }
+    .link:hover { text-decoration: underline; }
     tr:hover { background: #1c222d; }
+
+    /* Avatar Style */
+    .avatar-img {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        object-fit: cover;
+        vertical-align: middle;
+        background: #232935;
+    }
+
+    /* Constrain the content column to prevent table stretching */
+    .col-content { min-width: 200px; max-width: 400px; }
   </style>
 </head>
 <body>
@@ -47,19 +69,33 @@
 
   <div class="table-container">
     <table id="mainTable">
-      <thead id="thead"></thead>
+      <thead>
+        <tr>
+            <th>COMMENT ID</th>
+            <th>USER ID</th>
+            <th>MEDIA ID</th>
+            <th>REPLIED TO</th>
+            <th class="col-content">CONTENT</th>
+            <th>DATE/TIME</th>
+            <th>DELETED</th>
+            <th>TAG</th>
+            <th>LIKES</th>
+            <th>DISLIKES</th>
+            <th>SELF VOTED</th>
+            <th>USERNAME</th>
+            <th>AVATAR</th>
+            <th>MOD</th>
+            <th>ADMIN</th>
+            <th>REPLIES</th>
+            <th>TOTAL LIKES</th>
+        </tr>
+      </thead>
       <tbody id="tbody"></tbody>
     </table>
   </div>
 
   <script>
     let rawData = [];
-    const headers = [
-        'comment_id', 'user_id', 'media_id', 'parent_comment_id', 'content', 
-        'timestamp', 'deleted', 'tag', 'upvotes', 'downvotes', 
-        'user_vote_type', 'username', 'profile_picture_url', 
-        'is_mod', 'is_admin', 'reply_count', 'total_votes'
-    ];
 
     async function init() {
       const res = await fetch('dantotsu_global_db.csv');
@@ -70,18 +106,11 @@
         delimiter: "\t", 
         skipEmptyLines: true, 
         complete: (results) => {
-            // Sort newest first for the website
             rawData = results.data.sort((a, b) => b.comment_id - a.comment_id);
             document.getElementById('count').innerText = rawData.length;
-            renderHeaders();
             renderTable(rawData.slice(0, 100));
         }
       });
-    }
-
-    function renderHeaders() {
-        const head = document.getElementById('thead');
-        head.innerHTML = `<tr>${headers.map(h => `<th class="${h === 'comment_id' ? 'sticky-col' : ''}">${h.replace(/_/g, ' ').toUpperCase()}</th>`).join('')}</tr>`;
     }
 
     function renderTable(data) {
@@ -92,11 +121,11 @@
         
         return `
           <tr class="${isDeleted ? 'deleted-row' : ''}">
-            <td class="sticky-col"><strong>${row.comment_id}</strong></td>
-            <td>${row.user_id}</td>
+            <td><strong>${row.comment_id}</strong></td>
+            <td><a class="link" href="https://anilist.co/user/${row.user_id}" target="_blank">${row.user_id}</a></td>
             <td><a class="link" href="https://anilist.co/anime/${row.media_id}" target="_blank">${row.media_id}</a></td>
-            <td>${row.parent_comment_id}</td>
-            <td style="white-space: normal; min-width: 250px;">${row.content}</td>
+            <td>${row.parent_comment_id || ''}</td>
+            <td class="col-content">${row.content}</td>
             <td>${new Date(row.timestamp * 1000).toLocaleString()}</td>
             <td>${row.deleted}</td>
             <td>${row.tag}</td>
@@ -104,7 +133,11 @@
             <td>${row.downvotes}</td>
             <td>${row.user_vote_type}</td>
             <td><strong>${row.username}</strong> ${isMod ? '<span class="mod-badge">MOD</span>' : ''}</td>
-            <td><a class="link" href="${row.profile_picture_url}" target="_blank">View</a></td>
+            <td style="text-align: center;">
+                <a href="${row.profile_picture_url}" target="_blank">
+                    <img src="${row.profile_picture_url}" class="avatar-img" onerror="this.style.display='none'">
+                </a>
+            </td>
             <td>${row.is_mod}</td>
             <td>${row.is_admin}</td>
             <td>${row.reply_count}</td>
@@ -118,7 +151,8 @@
       const filtered = rawData.filter(r => 
         (r.content && r.content.toLowerCase().includes(t)) || 
         (r.username && r.username.toLowerCase().includes(t)) || 
-        (r.media_id && r.media_id.includes(t))
+        (r.media_id && r.media_id.includes(t)) ||
+        (r.user_id && r.user_id.includes(t))
       );
       renderTable(filtered.slice(0, 100));
     });
