@@ -166,7 +166,6 @@
     const renderer = new marked.Renderer();
     const originalText = renderer.text.bind(renderer);
     renderer.text = (text) => {
-        if (typeof text !== 'string') return text;
         return originalText(text).replace(/\|\|([\s\S]+?)\|\|/g, '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
     };
     marked.setOptions({ renderer, breaks: true, gfm: true });
