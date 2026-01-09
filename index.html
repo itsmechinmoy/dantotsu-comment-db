@@ -31,6 +31,9 @@
     /* New Download Button Style */
     .download-btn { background: #3dbbee; color: #0b0e14; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; }
     .download-btn:hover { background: #2a9cc9; }
+    
+    /* Reset Button Style */
+    #resetViewBtn { background: #ff5252; color: white; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; display: none; }
 
     .table-container { 
         background: #151921; 
@@ -128,6 +131,7 @@
     <div class="controls">
       <input type="text" id="search" placeholder="Search content, usernames, or IDs..." />
       <button class="download-btn" onclick="downloadCSV()">Download CSV</button>
+      <button id="resetViewBtn" onclick="resetView()">Reset Jump View</button>
       <label>Show: 
         <select id="loadLimit">
           <option value="100">Top 100</option>
@@ -228,17 +232,27 @@
     }
 
     function jumpToComment(targetId) {
-        // Must ensure we are showing "all" or target is within current limit for jump to work perfectly
-        const rows = document.querySelectorAll('#tbody tr');
-        for (let row of rows) {
-            if (row.getAttribute('data-id') === targetId) {
-                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Search in the full data list even if it's not visible
+        const targetComment = rawData.find(c => c.comment_id === targetId);
+        
+        if (targetComment) {
+            // Render only this comment to ensure jump works instantly and lag-free
+            renderTable([targetComment]);
+            document.getElementById('resetViewBtn').style.display = 'inline-block';
+            
+            const row = document.querySelector(`tr[data-id="${targetId}"]`);
+            if(row) {
                 row.classList.add('target-highlight');
                 setTimeout(() => row.classList.remove('target-highlight'), 3000);
-                return;
             }
+        } else {
+            alert("Comment ID " + targetId + " not found in database.");
         }
-        alert("Comment ID " + targetId + " not found in current view. Change 'Show' to ALL to jump to any reply.");
+    }
+
+    function resetView() {
+        document.getElementById('resetViewBtn').style.display = 'none';
+        updateView();
     }
 
     function formatBool(val) {
