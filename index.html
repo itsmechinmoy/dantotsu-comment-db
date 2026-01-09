@@ -15,44 +15,23 @@
     input { background: #151921; border: 1px solid #232935; color: white; padding: 10px; flex-grow: 1; border-radius: 4px; }
     select { background: #1c222d; color: white; border: 1px solid #232935; padding: 10px; border-radius: 4px; cursor: pointer; }
 
-    /* UI Fix: Remove horizontal scrollbar */
-    .table-container { 
-        background: #151921; 
-        border-radius: 8px; 
-        border: 1px solid #232935; 
-        width: 100%; 
-        overflow-x: hidden; /* Prevent horizontal scroll */
-    }
-    
-    table { 
-        width: 100%; 
-        border-collapse: collapse; 
-        font-size: 11px; 
-        table-layout: auto; /* Allows columns to adjust to content */
-    }
-
+    /* UI Fix: Removed overflow-x: auto and set overflow-x: hidden to kill scrollbar */
+    .table-container { background: #151921; border-radius: 8px; border: 1px solid #232935; width: 100%; overflow-x: hidden; }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: auto; }
     th, td { padding: 8px 10px; border: 1px solid #232935; word-break: break-word; }
-    
-    /* Keep headers on one line */
-    th { 
-        background: #1c222d; 
-        text-align: left; 
-        border-bottom: 2px solid #333; 
-        position: sticky; 
-        top: 0; 
-        z-index: 10; 
-        white-space: nowrap; 
-    }
+    th { background: #1c222d; text-align: left; border-bottom: 2px solid #333; position: sticky; top: 0; z-index: 10; }
     
     .mod-badge { color: #ff9800; font-weight: bold; border: 1px solid #ff9800; padding: 1px 3px; border-radius: 3px; font-size: 9px; }
     .deleted-row { opacity: 0.6; background: #2a1515 !important; }
     .link { color: #3dbbee; text-decoration: none; font-weight: bold; }
     tr:hover { background: #1c222d; }
 
+    /* Avatar & Markdown Styles */
     .avatar-img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; vertical-align: middle; border: 1px solid #333; }
-    .col-content { min-width: 200px; max-width: 400px; line-height: 1.4; }
+    .col-content { min-width: 250px; max-width: 500px; line-height: 1.4; }
     .col-content p { margin: 4px 0; }
     
+    /* Spoiler implementation */
     .spoiler { background: #42464d; color: #42464d; padding: 0 2px; border-radius: 3px; cursor: pointer; transition: color 0.2s; }
     .spoiler:hover { background: #4f545c; }
     .spoiler.revealed { background: rgba(255,255,255,0.1); color: inherit; }
@@ -106,17 +85,19 @@
   <script>
     let rawData = [];
     
+    // Custom Markdown for Discord Spoilers ||text||
     const renderer = new marked.Renderer();
-    renderer.text = function(text) {
-        if (typeof text !== 'string') return text;
-        return text.replace(/\|\|([\s\S]+?)\|\|/g, '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
+    const originalText = renderer.text.bind(renderer);
+    renderer.text = (text) => {
+        return originalText(text).replace(/\|\|([\s\S]+?)\|\|/g, '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
     };
     marked.setOptions({ renderer, breaks: true, gfm: true });
 
     async function init() {
       try {
         const res = await fetch('dantotsu_global_db.csv');
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        // Simple error logging to console if file is missing
+        if (!res.ok) { console.error("CSV file not found (404)"); }
         const text = await res.text();
         
         Papa.parse(text, { 
@@ -124,15 +105,13 @@
           delimiter: "\t", 
           skipEmptyLines: true, 
           complete: (results) => {
+              // Sorting by ID descending
               rawData = results.data.sort((a, b) => parseInt(b.comment_id) - parseInt(a.comment_id));
               document.getElementById('count').innerText = rawData.length;
               updateView();
           }
         });
-      } catch (e) { 
-          console.error("Database fetch failed", e);
-          document.getElementById('count').innerText = "Error loading CSV";
-      }
+      } catch (e) { console.error("Database fetch failed", e); }
     }
 
     function formatBool(val) {
@@ -145,11 +124,8 @@
         const isDeleted = row.deleted === '1';
         const isMod = row.is_mod === '1' || row.is_admin === '1';
         
-        let formattedContent = "";
-        try {
-            formattedContent = marked.parse(row.content || "");
-            if (typeof formattedContent === 'object') formattedContent = formattedContent.text || "";
-        } catch (e) { formattedContent = row.content || ""; }
+        // RESTORED: Exactly as the working old script
+        const formattedContent = marked.parse(row.content || "");
         
         return `
           <tr class="${isDeleted ? 'deleted-row' : ''}">
