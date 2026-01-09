@@ -15,18 +15,17 @@
     input { background: #151921; border: 1px solid #232935; color: white; padding: 10px; flex-grow: 1; border-radius: 4px; }
     select { background: #1c222d; color: white; border: 1px solid #232935; padding: 10px; border-radius: 4px; cursor: pointer; }
 
-    /* UI Fix: Enable horizontal scroll but hide the scrollbar visual */
     .table-container { 
         background: #151921; 
         border-radius: 8px; 
         border: 1px solid #232935; 
         width: 100%; 
-        overflow-x: auto; /* Enable scrolling */
-        -ms-overflow-style: none;  /* IE and Edge */
-        scrollbar-width: none;  /* Firefox */
+        overflow-x: auto; 
+        overflow-y: visible; 
+        -ms-overflow-style: none;  
+        scrollbar-width: none;  
     }
 
-    /* Hide scrollbar for Chrome, Safari and Opera */
     .table-container::-webkit-scrollbar {
         display: none;
     }
@@ -68,6 +67,32 @@
     .spoiler { background: #42464d; color: #42464d; padding: 0 2px; border-radius: 3px; cursor: pointer; transition: color 0.2s; }
     .spoiler:hover { background: #4f545c; }
     .spoiler.revealed { background: rgba(255,255,255,0.1); color: inherit; }
+
+    /* Back to Top Button Styling */
+    #backToTop {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 50px;
+      height: 50px;
+      background-color: #3dbbee;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: none; /* Hidden by default */
+      z-index: 100;
+      font-size: 24px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      transition: background-color 0.3s, transform 0.2s;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #backToTop:hover {
+      background-color: #2a9cc9;
+      transform: scale(1.1);
+    }
   </style>
 </head>
 <body>
@@ -114,6 +139,8 @@
       <tbody id="tbody"></tbody>
     </table>
   </div>
+
+  <button id="backToTop" title="Go to top">↑</button>
 
   <script>
     let rawData = [];
@@ -195,6 +222,20 @@
         }
         renderTable(filtered);
     }
+
+    // Scroll handling for Back to Top button
+    const topBtn = document.getElementById("backToTop");
+    window.onscroll = function() {
+      if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+        topBtn.style.display = "flex";
+      } else {
+        topBtn.style.display = "none";
+      }
+    };
+
+    topBtn.onclick = function() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     document.getElementById('search').addEventListener('input', updateView);
     document.getElementById('loadLimit').addEventListener('change', updateView);
