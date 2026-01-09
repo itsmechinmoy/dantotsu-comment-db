@@ -1,122 +1,333 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <title>Dantotsu | Comment DB Archive</title>
+  <meta property="og:title" content="Dantotsu | Comment DB Archive">
+  <meta property="og:description" content="A site dedicated to archive Dantotsu's comment database">
+  <meta property="og:image" content="https://files.catbox.moe/nuusdn.gif">
+  <meta property="og:image:width" content="847">
+  <meta property="og:image:height" content="847">
+  <link rel="icon" href="https://files.catbox.moe/1f7ay7.png" type="image/png">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dantotsu Forensic Archive</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
-    body { font-family: sans-serif; background: #0b0e14; color: #e0e0e0; padding: 20px; }
-    .header { background: #151921; padding: 20px; border-radius: 8px; border: 1px solid #232935; margin-bottom: 20px; }
-    input { background: #151921; border: 1px solid #232935; color: white; padding: 10px; width: 100%; border-radius: 4px; }
+    /* Allow pull-to-refresh by using min-height and removing overflow hidden from body */
+    html { background: #0b0e14; }
+
+    body { 
+        margin: 0; 
+        padding: 20px; 
+        box-sizing: border-box; 
+        font-family: sans-serif; 
+        color: #e0e0e0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .header { background: #151921; padding: 20px; border-radius: 8px; border: 1px solid #232935; margin-bottom: 20px; flex-shrink: 0; }
     
-    /* Horizontal scroll for 17 columns */
+    .controls { display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap; }
+    input { background: #151921; border: 1px solid #232935; color: white; padding: 10px; flex-grow: 1; border-radius: 4px; }
+    select { background: #1c222d; color: white; border: 1px solid #232935; padding: 10px; border-radius: 4px; cursor: pointer; }
+    
+    .download-btn { background: #3dbbee; color: #0b0e14; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; }
+    .download-btn:hover { background: #2a9cc9; }
+    
+    #resetViewBtn { background: #ff5252; color: white; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; display: none; }
+
     .table-container { 
         background: #151921; 
         border-radius: 8px; 
         border: 1px solid #232935; 
-        margin-top: 20px; 
-        overflow-x: auto; /* Forces horizontal scroll */
-        max-width: 100%;
+        width: 100%; 
+        max-height: calc(100vh - 200px); 
+        overflow: auto; 
+        -ms-overflow-style: none;  
+        scrollbar-width: none;  
+        position: relative;
+    }
+
+    .table-container::-webkit-scrollbar { display: none; }
+    
+    table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: auto; }
+    
+    th { 
+        background: #1c222d; 
+        text-align: center; 
+        border: 1px solid #232935;
+        border-bottom: 2px solid #333; 
+        padding: 8px 10px;
+        position: sticky; 
+        top: 0; 
+        z-index: 20; 
+        white-space: nowrap; 
+    }
+
+    .sortable { cursor: pointer; user-select: none; }
+    .sortable:hover { background: #232935; }
+    
+    td { padding: 8px 10px; border: 1px solid #232935; word-break: break-word; }
+    
+    .col-user-id { white-space: nowrap; padding-right: 15px; }
+
+    .mod-badge { color: #ff9800; font-weight: bold; border: 1px solid #ff9800; padding: 1px 3px; border-radius: 3px; font-size: 9px; }
+    .deleted-row { opacity: 0.6; background: #2a1515 !important; }
+    .link { color: #3dbbee; text-decoration: none; font-weight: bold; cursor: pointer; }
+    .link:hover { text-decoration: underline; }
+    
+    .target-highlight { background: #3dbbee44 !important; transition: background 2s; }
+
+    tr:hover { background: #1c222d; }
+
+    .avatar-img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; vertical-align: middle; border: 1px solid #333; }
+    
+    .col-content { min-width: 180px; max-width: 350px; line-height: 1.4; }
+    .col-content p { margin: 4px 0; }
+    
+    /* FIX: Image containment to prevent millions of px height */
+    .col-content img { 
+        max-width: 100%; 
+        max-height: 400px; /* Limits the height to something sane */
+        object-fit: contain; /* Keeps proportions without stretching */
+        height: auto; 
+        display: block; 
+        margin-top: 5px;
+        border-radius: 4px;
     }
     
-    table { width: 100%; border-collapse: collapse; font-size: 11px; white-space: nowrap; }
-    th { background: #1c222d; padding: 10px; text-align: left; border-bottom: 2px solid #333; position: sticky; left: 0; }
-    td { padding: 8px 10px; border-bottom: 1px solid #232935; }
-    
-    /* Sticky IDs so you don't lose track when scrolling right */
-    .sticky-col { position: sticky; left: 0; background: #151921; z-index: 5; border-right: 2px solid #333; }
-    
-    .mod-badge { color: #ff9800; font-weight: bold; border: 1px solid #ff9800; padding: 1px 3px; border-radius: 3px; font-size: 9px; }
-    .deleted-row { opacity: 0.5; color: #ff5252; background: #2a1515 !important; }
-    .link { color: #3dbbee; text-decoration: none; }
-    tr:hover { background: #1c222d; }
+    .spoiler { background: #42464d; color: #42464d; padding: 0 2px; border-radius: 3px; cursor: pointer; transition: color 0.2s; }
+    .spoiler:hover { background: #4f545c; }
+    .spoiler.revealed { background: rgba(255,255,255,0.1); color: inherit; }
+
+    #backToTop {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 50px;
+      height: 50px;
+      background-color: #3dbbee;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: none; 
+      z-index: 100;
+      font-size: 24px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      transition: background-color 0.3s, transform 0.2s;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #backToTop:hover {
+      background-color: #2a9cc9;
+      transform: scale(1.1);
+    }
   </style>
 </head>
 <body>
+
   <div class="header">
-    <h1>Dantotsu Global Archive</h1>
-    <p>Forensic 17-Column Sync | Total Comments: <span id="count">0</span></p>
-    <input type="text" id="search" placeholder="Filter content, usernames, or media IDs..." />
+    <h1>Dantotsu Comment DB Archive</h1>
+    <div class="controls">
+      <input type="text" id="search" placeholder="Search content, usernames, or IDs..." />
+      <button class="download-btn" onclick="downloadCSV()">Download CSV</button>
+      <button id="resetViewBtn" onclick="resetView()">Reset Jump View</button>
+      <label>Show: 
+        <select id="loadLimit">
+          <option value="100">Top 100</option>
+          <option value="500">Top 500</option>
+          <option value="1000">Top 1000</option>
+          <option value="all">ALL (Slow)</option>
+        </select>
+      </label>
+      <span>Comments: <strong id="currentCount">0</strong> / <strong id="totalCount">0</strong></span>
+    </div>
   </div>
 
-  <div class="table-container">
+  <div class="table-container" id="scrollContainer">
     <table id="mainTable">
-      <thead id="thead"></thead>
+      <thead>
+        <tr>
+            <th class="sortable" onclick="toggleSort()">COMMENT ID <span id="sortIcon">▼</span></th>
+            <th class="col-user-id">USER ID</th>
+            <th>MEDIA ID</th>
+            <th>REPLIED TO</th>
+            <th class="col-content">CONTENT</th>
+            <th>DATE/TIME</th>
+            <th>DELETED</th>
+            <th>TAG</th>
+            <th>LIKES</th>
+            <th>DISLIKES</th>
+            <th>SELF VOTED</th>
+            <th>USERNAME</th>
+            <th>AVATAR</th>
+            <th>MOD</th>
+            <th>ADMIN</th>
+            <th>REPLIES</th>
+            <th>TOTAL LIKES</th>
+        </tr>
+      </thead>
       <tbody id="tbody"></tbody>
     </table>
   </div>
 
+  <button id="backToTop" title="Go to top">↑</button>
+
   <script>
     let rawData = [];
-    const headers = [
-        'comment_id', 'user_id', 'media_id', 'parent_comment_id', 'content', 
-        'timestamp', 'deleted', 'tag', 'upvotes', 'downvotes', 
-        'user_vote_type', 'username', 'profile_picture_url', 
-        'is_mod', 'is_admin', 'reply_count', 'total_votes'
-    ];
+    let csvString = "";
+    let sortAscending = false;
+    
+    const renderer = new marked.Renderer();
+    const originalText = renderer.text.bind(renderer);
+    renderer.text = (text) => {
+        return originalText(text).replace(/\|\|([\s\S]+?)\|\|/g, '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
+    };
+    marked.setOptions({ renderer, breaks: true, gfm: true });
 
     async function init() {
-      const res = await fetch('dantotsu_global_db.csv');
-      const text = await res.text();
-      
-      Papa.parse(text, { 
-        header: true, 
-        delimiter: "\t", 
-        skipEmptyLines: true, 
-        complete: (results) => {
-            // Sort newest first for the website
-            rawData = results.data.sort((a, b) => b.comment_id - a.comment_id);
-            document.getElementById('count').innerText = rawData.length;
-            renderHeaders();
-            renderTable(rawData.slice(0, 100));
-        }
-      });
+      try {
+        const res = await fetch('dantotsu_global_db.csv');
+        csvString = await res.text();
+        
+        Papa.parse(csvString, { 
+          header: true, 
+          delimiter: "\t", 
+          skipEmptyLines: true, 
+          complete: (results) => {
+              rawData = results.data;
+              sortData();
+              document.getElementById('totalCount').innerText = rawData.length;
+              updateView();
+          }
+        });
+      } catch (e) { console.error("Database fetch failed", e); }
     }
 
-    function renderHeaders() {
-        const head = document.getElementById('thead');
-        head.innerHTML = `<tr>${headers.map(h => `<th class="${h === 'comment_id' ? 'sticky-col' : ''}">${h.replace(/_/g, ' ').toUpperCase()}</th>`).join('')}</tr>`;
+    function sortData() {
+        rawData.sort((a, b) => {
+            const idA = parseInt(a.comment_id);
+            const idB = parseInt(b.comment_id);
+            return sortAscending ? idA - idB : idB - idA;
+        });
+        document.getElementById('sortIcon').innerText = sortAscending ? "▲" : "▼";
+    }
+
+    function toggleSort() {
+        sortAscending = !sortAscending;
+        sortData();
+        updateView();
+    }
+
+    function downloadCSV() {
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", "dantotsu_global_db.csv");
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function jumpToComment(targetId) {
+        const targetComment = rawData.find(c => c.comment_id === targetId);
+        if (targetComment) {
+            renderTable([targetComment]);
+            document.getElementById('resetViewBtn').style.display = 'inline-block';
+            const row = document.querySelector(`tr[data-id="${targetId}"]`);
+            if(row) {
+                row.classList.add('target-highlight');
+                setTimeout(() => row.classList.remove('target-highlight'), 3000);
+            }
+        } else {
+            alert("Comment ID " + targetId + " not found in database.");
+        }
+    }
+
+    function resetView() {
+        document.getElementById('resetViewBtn').style.display = 'none';
+        updateView();
+    }
+
+    function formatBool(val) {
+        return (val === '1' || val === 1 || val === "true") ? '✅' : '❌';
     }
 
     function renderTable(data) {
       const body = document.getElementById('tbody');
+      document.getElementById('currentCount').innerText = data.length;
+      
       body.innerHTML = data.map(row => {
         const isDeleted = row.deleted === '1';
         const isMod = row.is_mod === '1' || row.is_admin === '1';
+        const formattedContent = marked.parse(row.content || "");
+        const parentId = row.parent_comment_id;
         
         return `
-          <tr class="${isDeleted ? 'deleted-row' : ''}">
-            <td class="sticky-col"><strong>${row.comment_id}</strong></td>
-            <td>${row.user_id}</td>
+          <tr class="${isDeleted ? 'deleted-row' : ''}" data-id="${row.comment_id}">
+            <td><strong>${row.comment_id}</strong></td>
+            <td class="col-user-id"><a class="link" href="https://anilist.co/user/${row.user_id}" target="_blank">${row.user_id}</a></td>
             <td><a class="link" href="https://anilist.co/anime/${row.media_id}" target="_blank">${row.media_id}</a></td>
-            <td>${row.parent_comment_id}</td>
-            <td style="white-space: normal; min-width: 250px;">${row.content}</td>
-            <td>${new Date(row.timestamp * 1000).toLocaleString()}</td>
-            <td>${row.deleted}</td>
-            <td>${row.tag}</td>
-            <td>${row.upvotes}</td>
-            <td>${row.downvotes}</td>
-            <td>${row.user_vote_type}</td>
+            <td>${parentId ? `<span class="link" onclick="jumpToComment('${parentId}')">${parentId}</span>` : ''}</td>
+            <td class="col-content">${formattedContent}</td>
+            <td style="white-space:nowrap">${new Date(row.timestamp * 1000).toLocaleString()}</td>
+            <td align="center">${formatBool(row.deleted)}</td>
+            <td>${row.tag || ''}</td>
+            <td align="center">${row.upvotes}</td>
+            <td align="center">${row.downvotes}</td>
+            <td align="center">${formatBool(row.user_vote_type)}</td>
             <td><strong>${row.username}</strong> ${isMod ? '<span class="mod-badge">MOD</span>' : ''}</td>
-            <td><a class="link" href="${row.profile_picture_url}" target="_blank">View</a></td>
-            <td>${row.is_mod}</td>
-            <td>${row.is_admin}</td>
-            <td>${row.reply_count}</td>
-            <td>${row.total_votes}</td>
+            <td align="center">
+                <img src="${row.profile_picture_url}" class="avatar-img" onerror="this.src='https://files.catbox.moe/1f7ay7.png'">
+            </td>
+            <td align="center">${formatBool(row.is_mod)}</td>
+            <td align="center">${formatBool(row.is_admin)}</td>
+            <td align="center">${row.reply_count}</td>
+            <td align="center">${row.total_votes}</td>
           </tr>`;
       }).join('');
     }
 
-    document.getElementById('search').addEventListener('input', (e) => {
-      const t = e.target.value.toLowerCase();
-      const filtered = rawData.filter(r => 
-        (r.content && r.content.toLowerCase().includes(t)) || 
-        (r.username && r.username.toLowerCase().includes(t)) || 
-        (r.media_id && r.media_id.includes(t))
-      );
-      renderTable(filtered.slice(0, 100));
-    });
+    function updateView() {
+        const searchTerm = document.getElementById('search').value.toLowerCase();
+        const limit = document.getElementById('loadLimit').value;
+        
+        let filtered = rawData.filter(r => 
+            (r.content && r.content.toLowerCase().includes(searchTerm)) || 
+            (r.username && r.username.toLowerCase().includes(searchTerm)) || 
+            (r.media_id && r.media_id.includes(searchTerm)) ||
+            (r.comment_id && r.comment_id.includes(searchTerm))
+        );
+
+        if (limit !== 'all') {
+            filtered = filtered.slice(0, parseInt(limit));
+        }
+        renderTable(filtered);
+    }
+
+    const topBtn = document.getElementById("backToTop");
+    const scrollContainer = document.getElementById("scrollContainer");
+
+    scrollContainer.onscroll = function() {
+      if (scrollContainer.scrollTop > 300) {
+        topBtn.style.display = "flex";
+      } else {
+        topBtn.style.display = "none";
+      }
+    };
+
+    topBtn.onclick = function() {
+      scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    document.getElementById('search').addEventListener('input', updateView);
+    document.getElementById('loadLimit').addEventListener('change', updateView);
 
     init();
   </script>
