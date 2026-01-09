@@ -5,66 +5,53 @@
   <link rel="icon" href="https://files.catbox.moe/1f7ay7.png" type="image/png">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta property="og:description" content="A site dedicated to archive Dantotsu's comment database">
-  <meta property="og:image" content="https://files.catbox.moe/nuusdn.gif">
-  <meta property="og:image:width" content="876">
-  <meta property="og:image:height" content="876">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     body { font-family: sans-serif; background: #0b0e14; color: #e0e0e0; padding: 20px; margin: 0; }
     .header { background: #151921; padding: 20px; border-radius: 8px; border: 1px solid #232935; margin-bottom: 20px; }
-    input { background: #151921; border: 1px solid #232935; color: white; padding: 10px; width: 100%; border-radius: 4px; box-sizing: border-box; }
     
-    /* UI Adjustments: Remove forced horizontal scroll, allow fitting to screen */
-    .table-container { 
-        background: #151921; 
-        border-radius: 8px; 
-        border: 1px solid #232935; 
-        margin-top: 20px;
-        width: 100%;
-        overflow-x: hidden; /* Prevent horizontal scroll on PC */
-    }
-    
-    table { 
-        width: 100%; 
-        border-collapse: collapse; 
-        font-size: 11px; 
-        table-layout: auto; /* Allows table to fit within screen width */
-    }
+    .controls { display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap; }
+    input { background: #151921; border: 1px solid #232935; color: white; padding: 10px; flex-grow: 1; border-radius: 4px; }
+    select { background: #1c222d; color: white; border: 1px solid #232935; padding: 10px; border-radius: 4px; cursor: pointer; }
 
-    th, td { 
-        padding: 8px 10px; 
-        border: 1px solid #232935; /* Borders between every column */
-        word-break: break-word; /* Ensure text wraps to fit screen */
-    }
-
-    th { background: #1c222d; text-align: left; border-bottom: 2px solid #333; }
+    .table-container { background: #151921; border-radius: 8px; border: 1px solid #232935; width: 100%; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: auto; }
+    th, td { padding: 8px 10px; border: 1px solid #232935; word-break: break-word; }
+    th { background: #1c222d; text-align: left; border-bottom: 2px solid #333; position: sticky; top: 0; z-index: 10; }
     
     .mod-badge { color: #ff9800; font-weight: bold; border: 1px solid #ff9800; padding: 1px 3px; border-radius: 3px; font-size: 9px; }
-    .deleted-row { opacity: 0.5; color: #ff5252; background: #2a1515 !important; }
+    .deleted-row { opacity: 0.6; background: #2a1515 !important; }
     .link { color: #3dbbee; text-decoration: none; font-weight: bold; }
-    .link:hover { text-decoration: underline; }
     tr:hover { background: #1c222d; }
 
-    /* Avatar Style */
-    .avatar-img {
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        object-fit: cover;
-        vertical-align: middle;
-        background: #232935;
-    }
-
-    /* Constrain the content column to prevent table stretching */
-    .col-content { min-width: 200px; max-width: 400px; }
+    /* Avatar & Markdown Styles */
+    .avatar-img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; vertical-align: middle; border: 1px solid #333; }
+    .col-content { min-width: 250px; max-width: 500px; line-height: 1.4; }
+    .col-content p { margin: 4px 0; }
+    
+    /* Spoiler implementation */
+    .spoiler { background: #42464d; color: #42464d; padding: 0 2px; border-radius: 3px; cursor: pointer; transition: color 0.2s; }
+    .spoiler:hover { background: #4f545c; }
+    .spoiler.revealed { background: rgba(255,255,255,0.1); color: inherit; }
   </style>
 </head>
 <body>
+
   <div class="header">
     <h1>Dantotsu Comment DB Archive</h1>
-    <p>Total Comments: <span id="count">0</span></p>
-    <input type="text" id="search" placeholder="Filter content, usernames, or media IDs..." />
+    <div class="controls">
+      <input type="text" id="search" placeholder="Search content, usernames, or IDs..." />
+      <label>Show: 
+        <select id="loadLimit">
+          <option value="100">Top 100</option>
+          <option value="500">Top 500</option>
+          <option value="1000">Top 1000</option>
+          <option value="all">ALL (Slow)</option>
+        </select>
+      </label>
+      <span>Total Database: <strong id="count">0</strong></span>
+    </div>
   </div>
 
   <div class="table-container">
@@ -96,21 +83,36 @@
 
   <script>
     let rawData = [];
+    
+    // Custom Markdown for Discord Spoilers ||text||
+    const renderer = new marked.Renderer();
+    const originalText = renderer.text.bind(renderer);
+    renderer.text = (text) => {
+        return originalText(text).replace(/\|\|([\s\S]+?)\|\|/g, '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
+    };
+    marked.setOptions({ renderer, breaks: true, gfm: true });
 
     async function init() {
-      const res = await fetch('dantotsu_global_db.csv');
-      const text = await res.text();
-      
-      Papa.parse(text, { 
-        header: true, 
-        delimiter: "\t", 
-        skipEmptyLines: true, 
-        complete: (results) => {
-            rawData = results.data.sort((a, b) => b.comment_id - a.comment_id);
-            document.getElementById('count').innerText = rawData.length;
-            renderTable(rawData.slice(0, 100));
-        }
-      });
+      try {
+        const res = await fetch('dantotsu_global_db.csv');
+        const text = await res.text();
+        
+        Papa.parse(text, { 
+          header: true, 
+          delimiter: "\t", 
+          skipEmptyLines: true, 
+          complete: (results) => {
+              // Sorting by ID descending
+              rawData = results.data.sort((a, b) => parseInt(b.comment_id) - parseInt(a.comment_id));
+              document.getElementById('count').innerText = rawData.length;
+              updateView();
+          }
+        });
+      } catch (e) { console.error("Database fetch failed", e); }
+    }
+
+    function formatBool(val) {
+        return (val === '1' || val === 1 || val === "true") ? '✅' : '❌';
     }
 
     function renderTable(data) {
@@ -118,6 +120,7 @@
       body.innerHTML = data.map(row => {
         const isDeleted = row.deleted === '1';
         const isMod = row.is_mod === '1' || row.is_admin === '1';
+        const formattedContent = marked.parse(row.content || "");
         
         return `
           <tr class="${isDeleted ? 'deleted-row' : ''}">
@@ -125,37 +128,44 @@
             <td><a class="link" href="https://anilist.co/user/${row.user_id}" target="_blank">${row.user_id}</a></td>
             <td><a class="link" href="https://anilist.co/anime/${row.media_id}" target="_blank">${row.media_id}</a></td>
             <td>${row.parent_comment_id || ''}</td>
-            <td class="col-content">${row.content}</td>
-            <td>${new Date(row.timestamp * 1000).toLocaleString()}</td>
-            <td>${row.deleted}</td>
-            <td>${row.tag}</td>
+            <td class="col-content">${formattedContent}</td>
+            <td style="white-space:nowrap">${new Date(row.timestamp * 1000).toLocaleString()}</td>
+            <td align="center">${formatBool(row.deleted)}</td>
+            <td>${row.tag || ''}</td>
             <td>${row.upvotes}</td>
             <td>${row.downvotes}</td>
-            <td>${row.user_vote_type}</td>
+            <td>${row.user_vote_type || '0'}</td>
             <td><strong>${row.username}</strong> ${isMod ? '<span class="mod-badge">MOD</span>' : ''}</td>
-            <td style="text-align: center;">
-                <a href="${row.profile_picture_url}" target="_blank">
-                    <img src="${row.profile_picture_url}" class="avatar-img" onerror="this.style.display='none'">
-                </a>
+            <td align="center">
+                <img src="${row.profile_picture_url}" class="avatar-img" onerror="this.src='https://files.catbox.moe/1f7ay7.png'">
             </td>
-            <td>${row.is_mod}</td>
-            <td>${row.is_admin}</td>
+            <td align="center">${formatBool(row.is_mod)}</td>
+            <td align="center">${formatBool(row.is_admin)}</td>
             <td>${row.reply_count}</td>
             <td>${row.total_votes}</td>
           </tr>`;
       }).join('');
     }
 
-    document.getElementById('search').addEventListener('input', (e) => {
-      const t = e.target.value.toLowerCase();
-      const filtered = rawData.filter(r => 
-        (r.content && r.content.toLowerCase().includes(t)) || 
-        (r.username && r.username.toLowerCase().includes(t)) || 
-        (r.media_id && r.media_id.includes(t)) ||
-        (r.user_id && r.user_id.includes(t))
-      );
-      renderTable(filtered.slice(0, 100));
-    });
+    function updateView() {
+        const searchTerm = document.getElementById('search').value.toLowerCase();
+        const limit = document.getElementById('loadLimit').value;
+        
+        let filtered = rawData.filter(r => 
+            (r.content && r.content.toLowerCase().includes(searchTerm)) || 
+            (r.username && r.username.toLowerCase().includes(searchTerm)) || 
+            (r.media_id && r.media_id.includes(searchTerm)) ||
+            (r.comment_id && r.comment_id.includes(searchTerm))
+        );
+
+        if (limit !== 'all') {
+            filtered = filtered.slice(0, parseInt(limit));
+        }
+        renderTable(filtered);
+    }
+
+    document.getElementById('search').addEventListener('input', updateView);
+    document.getElementById('loadLimit').addEventListener('change', updateView);
 
     init();
   </script>
