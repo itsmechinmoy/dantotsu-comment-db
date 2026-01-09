@@ -42,7 +42,7 @@
     .col-content { min-width: 180px; max-width: 350px; line-height: 1.4; }
     .col-content p { margin: 4px 0; }
     
-    /* FIX: Ensure images within the content column stay inside the cell */
+    /* Image containment fix */
     .col-content img { 
         max-width: 100%; 
         height: auto; 
@@ -104,10 +104,10 @@
   <script>
     let rawData = [];
     
+    // Stable Renderer
     const renderer = new marked.Renderer();
     const originalText = renderer.text.bind(renderer);
     renderer.text = (text) => {
-        if (typeof text !== 'string') return text;
         return originalText(text).replace(/\|\|([\s\S]+?)\|\|/g, '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
     };
     marked.setOptions({ renderer, breaks: true, gfm: true });
@@ -139,6 +139,8 @@
       body.innerHTML = data.map(row => {
         const isDeleted = row.deleted === '1';
         const isMod = row.is_mod === '1' || row.is_admin === '1';
+        
+        // Exact original content parsing
         const formattedContent = marked.parse(row.content || "");
         
         return `
