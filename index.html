@@ -29,7 +29,6 @@
         top: 0; 
         z-index: 10; 
         white-space: nowrap; /* Prevents 2-line titles */
-        min-width: 50px; 
     }
     
     td { padding: 8px 10px; border: 1px solid #232935; word-break: break-word; }
@@ -39,14 +38,12 @@
     .link { color: #3dbbee; text-decoration: none; font-weight: bold; }
     tr:hover { background: #1c222d; }
 
-    /* Avatar & Markdown Styles */
     .avatar-img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; vertical-align: middle; border: 1px solid #333; }
     
     /* Narrowed content column to give other headers more space */
     .col-content { min-width: 180px; max-width: 350px; line-height: 1.4; }
     .col-content p { margin: 4px 0; }
     
-    /* Spoiler implementation */
     .spoiler { background: #42464d; color: #42464d; padding: 0 2px; border-radius: 3px; cursor: pointer; transition: color 0.2s; }
     .spoiler:hover { background: #4f545c; }
     .spoiler.revealed { background: rgba(255,255,255,0.1); color: inherit; }
@@ -100,10 +97,10 @@
   <script>
     let rawData = [];
     
+    // RESTORED: Exact working Markdown renderer
     const renderer = new marked.Renderer();
     const originalText = renderer.text.bind(renderer);
     renderer.text = (text) => {
-        if (typeof text !== 'string') return text;
         return originalText(text).replace(/\|\|([\s\S]+?)\|\|/g, '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
     };
     marked.setOptions({ renderer, breaks: true, gfm: true });
@@ -135,6 +132,8 @@
       body.innerHTML = data.map(row => {
         const isDeleted = row.deleted === '1';
         const isMod = row.is_mod === '1' || row.is_admin === '1';
+        
+        // RESTORED: Exactly as the working version
         const formattedContent = marked.parse(row.content || "");
         
         return `
