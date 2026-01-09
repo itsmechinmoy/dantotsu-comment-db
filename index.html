@@ -8,13 +8,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
-    body { font-family: sans-serif; background: #0b0e14; color: #e0e0e0; padding: 20px; margin: 0; height: 100vh; display: flex; flex-direction: column; }
+    body { font-family: sans-serif; background: #0b0e14; color: #e0e0e0; padding: 20px; margin: 0; height: 100vh; display: flex; flex-direction: column; box-sizing: border-box; }
     .header { background: #151921; padding: 20px; border-radius: 8px; border: 1px solid #232935; margin-bottom: 20px; flex-shrink: 0; }
     
     .controls { display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap; }
     input { background: #151921; border: 1px solid #232935; color: white; padding: 10px; flex-grow: 1; border-radius: 4px; }
-    
-    /* FIX: Header titles stay on one line */
+    select { background: #1c222d; color: white; border: 1px solid #232935; padding: 10px; border-radius: 4px; cursor: pointer; }
+
     th { 
         background: #1c222d; 
         text-align: left; 
@@ -29,7 +29,6 @@
         z-index: 10;
     }
 
-    /* Virtual Scroll Container */
     .table-viewport {
         flex-grow: 1;
         overflow-y: auto;
@@ -41,21 +40,21 @@
     table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
     td { padding: 8px 10px; border: 1px solid #232935; word-break: break-word; overflow: hidden; }
     
-    /* Column Widths to keep layout stable */
+    /* Fixed Column Widths */
     .col-id { width: 60px; }
     .col-user { width: 70px; }
     .col-media { width: 70px; }
-    .col-content { width: 300px; }
-    .col-date { width: 130px; }
-    .col-small { width: 50px; }
-    .col-user-info { width: 120px; }
+    .col-content { width: 350px; }
+    .col-date { width: 140px; }
+    .col-small { width: 55px; }
+    .col-user-info { width: 130px; }
 
     .mod-badge { color: #ff9800; font-weight: bold; border: 1px solid #ff9800; padding: 1px 3px; border-radius: 3px; font-size: 9px; }
     .deleted-row { opacity: 0.6; background: #2a1515 !important; }
     .link { color: #3dbbee; text-decoration: none; font-weight: bold; }
     tr:hover { background: #1c222d; }
 
-    .avatar-img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; vertical-align: middle; }
+    .avatar-img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; vertical-align: middle; border: 1px solid #333; }
     .spoiler { background: #42464d; color: #42464d; padding: 0 2px; border-radius: 3px; cursor: pointer; }
     .spoiler.revealed { background: rgba(255,255,255,0.1); color: inherit; }
   </style>
@@ -66,6 +65,14 @@
     <h1>Dantotsu Comment DB Archive</h1>
     <div class="controls">
       <input type="text" id="search" placeholder="Search content, usernames, or IDs..." />
+      <label>Show: 
+        <select id="loadLimit">
+          <option value="100">Top 100</option>
+          <option value="500">Top 500</option>
+          <option value="1000">Top 1000</option>
+          <option value="all" selected>ALL</option>
+        </select>
+      </label>
       <span>Total Database: <strong id="count">0</strong></span>
     </div>
   </div>
@@ -100,12 +107,14 @@
   <script>
     let rawData = [];
     let filteredData = [];
-    const ROW_HEIGHT = 45; // Approximate height of a row
-    const VISIBLE_ROWS = 40; // Number of rows to render at once
+    const ROW_HEIGHT = 50; 
+    const VISIBLE_ROWS = 30;
 
-    // Markdown Configuration
     const renderer = new marked.Renderer();
-    renderer.text = (text) => text.replace(/\|\|([\s\S]+?)\|\|/g, '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
+    renderer.text = (text) => {
+        if (typeof text !== 'string') return text;
+        return text.replace(/\|\|([\s\S]+?)\|\|/g, '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
+    };
     marked.setOptions({ renderer, breaks: true, gfm: true });
 
     async function init() {
@@ -115,15 +124,34 @@
         header: true, delimiter: "\t", skipEmptyLines: true, 
         complete: (results) => {
           rawData = results.data.sort((a, b) => parseInt(b.comment_id) - parseInt(a.comment_id));
-          filteredData = rawData;
           document.getElementById('count').innerText = rawData.length;
-          renderVirtualTable();
+          updateFilter();
         }
       });
     }
 
     function formatBool(val) {
-        return (val === '1' || val === 1 || val === "true") ? '✅' : '❌';
+        return (val === '1' || val === 1) ? '✅' : '❌';
+    }
+
+    function updateFilter() {
+      const t = document.getElementById('search').value.toLowerCase();
+      const limit = document.getElementById('loadLimit').value;
+      
+      let processed = rawData.filter(r => 
+        (r.content?.toLowerCase().includes(t)) || 
+        (r.username?.toLowerCase().includes(t)) || 
+        (r.media_id?.includes(t)) ||
+        (r.comment_id?.includes(t))
+      );
+
+      if (limit !== 'all') {
+        processed = processed.slice(0, parseInt(limit));
+      }
+      
+      filteredData = processed;
+      document.getElementById('viewport').scrollTop = 0;
+      renderVirtualTable();
     }
 
     function renderVirtualTable() {
@@ -134,7 +162,6 @@
       const startIndex = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - 5);
       const endIndex = Math.min(filteredData.length, startIndex + VISIBLE_ROWS + 10);
 
-      // Create padding to keep scrollbar correct
       const paddingTop = startIndex * ROW_HEIGHT;
       const paddingBottom = (filteredData.length - endIndex) * ROW_HEIGHT;
 
@@ -144,16 +171,15 @@
         displayData.map(row => {
           const isDeleted = row.deleted === '1';
           const isMod = row.is_mod === '1' || row.is_admin === '1';
-          const dateStr = row.timestamp ? new Date(row.timestamp * 1000).toLocaleString() : 'N/A';
           
           return `
             <tr class="${isDeleted ? 'deleted-row' : ''}" style="height: ${ROW_HEIGHT}px">
-              <td>${row.comment_id}</td>
+              <td><strong>${row.comment_id}</strong></td>
               <td><a class="link" href="https://anilist.co/user/${row.user_id}" target="_blank">${row.user_id}</a></td>
               <td><a class="link" href="https://anilist.co/anime/${row.media_id}" target="_blank">${row.media_id}</a></td>
               <td>${row.parent_comment_id || ''}</td>
               <td class="col-content">${marked.parse(row.content || "")}</td>
-              <td>${dateStr}</td>
+              <td>${new Date(row.timestamp * 1000).toLocaleString()}</td>
               <td align="center">${formatBool(row.deleted)}</td>
               <td>${row.tag || ''}</td>
               <td>${row.upvotes}</td>
@@ -171,18 +197,8 @@
     }
 
     document.getElementById('viewport').addEventListener('scroll', renderVirtualTable);
-
-    document.getElementById('search').addEventListener('input', (e) => {
-      const t = e.target.value.toLowerCase();
-      filteredData = rawData.filter(r => 
-        (r.content?.toLowerCase().includes(t)) || 
-        (r.username?.toLowerCase().includes(t)) || 
-        (r.media_id?.includes(t)) ||
-        (r.comment_id?.includes(t))
-      );
-      document.getElementById('viewport').scrollTop = 0;
-      renderVirtualTable();
-    });
+    document.getElementById('search').addEventListener('input', updateFilter);
+    document.getElementById('loadLimit').addEventListener('change', updateFilter);
 
     init();
   </script>
