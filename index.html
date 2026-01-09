@@ -8,18 +8,21 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
-    /* Prevent the whole page from scrolling by making it fit the screen height */
-    html, body { 
-        height: 100%; 
-        margin: 0; 
-        padding: 0; 
-        overflow: hidden; 
+    /* Allow pull-to-refresh by using min-height and removing overflow hidden from body */
+    html { 
         background: #0b0e14;
+    }
+
+    body { 
+        margin: 0; 
+        padding: 20px; 
+        box-sizing: border-box; 
+        font-family: sans-serif; 
+        color: #e0e0e0;
+        min-height: 100vh;
         display: flex;
         flex-direction: column;
     }
-
-    body { padding: 20px; box-sizing: border-box; font-family: sans-serif; color: #e0e0e0; }
 
     .header { background: #151921; padding: 20px; border-radius: 8px; border: 1px solid #232935; margin-bottom: 20px; flex-shrink: 0; }
     
@@ -27,14 +30,14 @@
     input { background: #151921; border: 1px solid #232935; color: white; padding: 10px; flex-grow: 1; border-radius: 4px; }
     select { background: #1c222d; color: white; border: 1px solid #232935; padding: 10px; border-radius: 4px; cursor: pointer; }
 
-    /* UI Fix: Fixed height container makes the table scroll inside while headers stay put */
+    /* Fixed height container for sticky headers, but allows body context for refresh */
     .table-container { 
         background: #151921; 
         border-radius: 8px; 
         border: 1px solid #232935; 
         width: 100%; 
-        flex-grow: 1; /* Fills remaining screen space */
-        overflow: auto; /* Handles both vertical and horizontal scroll */
+        max-height: calc(100vh - 200px); /* Adjust based on header/controls height */
+        overflow: auto; 
         -ms-overflow-style: none;  
         scrollbar-width: none;  
         position: relative;
@@ -48,19 +51,18 @@
     
     th { 
         background: #1c222d; 
-        text-align: left; 
+        text-align: center; /* Properly centered titles */
         border: 1px solid #232935;
         border-bottom: 2px solid #333; 
         padding: 8px 10px;
         position: sticky; 
-        top: 0; /* Sticks to top of table-container */
+        top: 0; 
         z-index: 20; 
         white-space: nowrap; 
     }
     
     td { padding: 8px 10px; border: 1px solid #232935; word-break: break-word; }
     
-    /* Reduced width for User ID to keep it compact but on one line */
     .col-user-id { white-space: nowrap; padding-right: 15px; }
 
     .mod-badge { color: #ff9800; font-weight: bold; border: 1px solid #ff9800; padding: 1px 3px; border-radius: 3px; font-size: 9px; }
@@ -125,7 +127,7 @@
           <option value="all">ALL (Slow)</option>
         </select>
       </label>
-      <span>Total Database: <strong id="count">0</strong></span>
+      <span>Comments: <strong id="currentCount">0</strong> / <strong id="totalCount">0</strong></span>
     </div>
   </div>
 
@@ -164,6 +166,7 @@
     const renderer = new marked.Renderer();
     const originalText = renderer.text.bind(renderer);
     renderer.text = (text) => {
+        if (typeof text !== 'string') return text;
         return originalText(text).replace(/\|\|([\s\S]+?)\|\|/g, '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
     };
     marked.setOptions({ renderer, breaks: true, gfm: true });
@@ -179,7 +182,7 @@
           skipEmptyLines: true, 
           complete: (results) => {
               rawData = results.data.sort((a, b) => parseInt(b.comment_id) - parseInt(a.comment_id));
-              document.getElementById('count').innerText = rawData.length;
+              document.getElementById('totalCount').innerText = rawData.length;
               updateView();
           }
         });
@@ -192,6 +195,8 @@
 
     function renderTable(data) {
       const body = document.getElementById('tbody');
+      document.getElementById('currentCount').innerText = data.length;
+      
       body.innerHTML = data.map(row => {
         const isDeleted = row.deleted === '1';
         const isMod = row.is_mod === '1' || row.is_admin === '1';
@@ -207,8 +212,8 @@
             <td style="white-space:nowrap">${new Date(row.timestamp * 1000).toLocaleString()}</td>
             <td align="center">${formatBool(row.deleted)}</td>
             <td>${row.tag || ''}</td>
-            <td>${row.upvotes}</td>
-            <td>${row.downvotes}</td>
+            <td align="center">${row.upvotes}</td>
+            <td align="center">${row.downvotes}</td>
             <td align="center">${formatBool(row.user_vote_type)}</td>
             <td><strong>${row.username}</strong> ${isMod ? '<span class="mod-badge">MOD</span>' : ''}</td>
             <td align="center">
@@ -216,8 +221,8 @@
             </td>
             <td align="center">${formatBool(row.is_mod)}</td>
             <td align="center">${formatBool(row.is_admin)}</td>
-            <td>${row.reply_count}</td>
-            <td>${row.total_votes}</td>
+            <td align="center">${row.reply_count}</td>
+            <td align="center">${row.total_votes}</td>
           </tr>`;
       }).join('');
     }
@@ -239,7 +244,6 @@
         renderTable(filtered);
     }
 
-    // Scroll handling for Back to Top button updated for internal container
     const topBtn = document.getElementById("backToTop");
     const scrollContainer = document.getElementById("scrollContainer");
 
