@@ -33,11 +33,9 @@
     input { background: #151921; border: 1px solid #232935; color: white; padding: 10px; flex-grow: 1; border-radius: 4px; }
     select { background: #1c222d; color: white; border: 1px solid #232935; padding: 10px; border-radius: 4px; cursor: pointer; }
     
-    /* New Download Button Style */
     .download-btn { background: #3dbbee; color: #0b0e14; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; }
     .download-btn:hover { background: #2a9cc9; }
     
-    /* Reset Button Style */
     #resetViewBtn { background: #ff5252; color: white; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; display: none; }
 
     .table-container { 
@@ -68,7 +66,6 @@
         white-space: nowrap; 
     }
 
-    /* Sortable Header UI */
     .sortable { cursor: pointer; user-select: none; }
     .sortable:hover { background: #232935; }
     
@@ -81,7 +78,6 @@
     .link { color: #3dbbee; text-decoration: none; font-weight: bold; cursor: pointer; }
     .link:hover { text-decoration: underline; }
     
-    /* Highlight for target comment jump */
     .target-highlight { background: #3dbbee44 !important; transition: background 2s; }
 
     tr:hover { background: #1c222d; }
@@ -91,11 +87,10 @@
     .col-content { min-width: 180px; max-width: 350px; line-height: 1.4; }
     .col-content p { margin: 4px 0; }
     
-    /* FIX: Image containment to prevent millions of px height */
     .col-content img { 
         max-width: 100%; 
-        max-height: 400px; /* Limits the height to something sane */
-        object-fit: contain; /* Keeps proportions without stretching */
+        max-height: 400px; 
+        object-fit: contain; 
         height: auto; 
         display: block; 
         margin-top: 5px;
@@ -203,7 +198,8 @@
           delimiter: "\t", 
           skipEmptyLines: true, 
           complete: (results) => {
-              rawData = results.data;
+              // FIX: Ensure no empty objects or rows without comment_id are processed
+              rawData = results.data.filter(row => row.comment_id && row.comment_id.trim() !== "");
               sortData();
               document.getElementById('totalCount').innerText = rawData.length;
               updateView();
@@ -214,8 +210,8 @@
 
     function sortData() {
         rawData.sort((a, b) => {
-            const idA = parseInt(a.comment_id);
-            const idB = parseInt(b.comment_id);
+            const idA = parseInt(a.comment_id) || 0;
+            const idB = parseInt(b.comment_id) || 0;
             return sortAscending ? idA - idB : idB - idA;
         });
         document.getElementById('sortIcon').innerText = sortAscending ? "▲" : "▼";
@@ -240,14 +236,10 @@
     }
 
     function jumpToComment(targetId) {
-        // Search in the full data list even if it's not visible
         const targetComment = rawData.find(c => c.comment_id === targetId);
-        
         if (targetComment) {
-            // Render only this comment to ensure jump works instantly and lag-free
             renderTable([targetComment]);
             document.getElementById('resetViewBtn').style.display = 'inline-block';
-            
             const row = document.querySelector(`tr[data-id="${targetId}"]`);
             if(row) {
                 row.classList.add('target-highlight');
@@ -277,7 +269,6 @@
         const formattedContent = marked.parse(row.content || "");
         const parentId = row.parent_comment_id;
         
-        // Custom Date Format: DD/MM/YYYY, HH:MM:SS
         let displayDate = "N/A";
         if (row.timestamp) {
             const dateObj = isNaN(row.timestamp) ? new Date(row.timestamp) : new Date(row.timestamp * 1000);
