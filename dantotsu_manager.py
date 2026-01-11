@@ -168,7 +168,7 @@ class DantotsuDailySync:
             # Search query: messages from bot containing "has been deleted"
             search_url = f"https://discord.com/api/v9/guilds/{GUILD_ID}/messages/search"
             params = {
-                "author_id": bot_user_id,
+                "author_id": MOD_BOT_ID,
                 "content": "has been deleted",
                 "include_nsfw": "true"
             }
@@ -210,7 +210,7 @@ class DantotsuDailySync:
                 print(f"✓ Scanned deletion messages, found {len(deleted_ids)} deletions")
                 sys.stdout.flush()
             else:
-                print(f"⚠️  Discord search returned {r.status_code}")
+                print(f"⚠️  Discord search returned {r.status_code}: {r.text[:200]}")
                 sys.stdout.flush()
                 
         except Exception as e:
