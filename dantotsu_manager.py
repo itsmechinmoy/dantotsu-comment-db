@@ -247,11 +247,19 @@ class DantotsuDailySync:
         # Load existing data
         print(f"\n📂 Loading database: {DB_PATH}")
         df = pd.read_csv(DB_PATH, sep='\t')
+        
+        # Clean up: remove rows with invalid comment IDs
+        df = df.dropna(subset=['comment_id'])
+        df = df[df['comment_id'] != '']
+        df['comment_id'] = pd.to_numeric(df['comment_id'], errors='coerce')
+        df = df.dropna(subset=['comment_id'])
+        df['comment_id'] = df['comment_id'].astype(int)
+        
         initial_count = len(df)
-        print(f"✓ Loaded {initial_count} existing comments")
+        print(f"✓ Loaded {initial_count} valid comments")
         
         last_id = int(df['comment_id'].max())
-        existing_comment_ids = set(df['comment_id'].astype(int))
+        existing_comment_ids = set(df['comment_id'])
         
         # 1. Discover new comments
         new_comments, active_media = self.discover_new_comments(last_id)
@@ -270,6 +278,11 @@ class DantotsuDailySync:
         if new_comments:
             print(f"\n💾 Adding {len(new_comments)} new comments to database...")
             df_new = pd.DataFrame(new_comments)
+            # Ensure comment_id is int in new data
+            if len(df_new) > 0:
+                df_new['comment_id'] = pd.to_numeric(df_new['comment_id'], errors='coerce')
+                df_new = df_new.dropna(subset=['comment_id'])
+                df_new['comment_id'] = df_new['comment_id'].astype(int)
             df = pd.concat([df, df_new], ignore_index=True)
         
         # 5. Deduplicate and sort
