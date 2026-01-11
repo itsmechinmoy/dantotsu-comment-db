@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+import sys
 import requests
 import json
 import csv
@@ -7,6 +9,10 @@ import re
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
+
+# Force unbuffered output for real-time logs in GitHub Actions
+sys.stdout.reconfigure(line_buffering=True)
+sys.stderr.reconfigure(line_buffering=True)
 
 # --- CONFIGURATION ---
 APP_AUTH_KEY = "6*45Qp%W2RS@t38jkXoSKY588Ynj%n"
@@ -183,6 +189,7 @@ class DantotsuDailySync:
     def discover_new_comments(self, last_known_id):
         """Discover new comments by checking sequential IDs"""
         print(f"🔍 Scanning for new comments after ID {last_known_id}...")
+        sys.stdout.flush()  # Force output
         
         new_comments = []
         active_media = set()
@@ -195,6 +202,7 @@ class DantotsuDailySync:
             
             if comment:
                 print(f"  ✨ Found new comment: {current_id}")
+                sys.stdout.flush()
                 new_comments.append(self.format_row(comment))
                 active_media.add(int(comment.get('media_id')))
                 consecutive_404s = 0
@@ -202,11 +210,13 @@ class DantotsuDailySync:
                 consecutive_404s += 1
                 if consecutive_404s % 10 == 0:
                     print(f"  ⏳ Checked {consecutive_404s} empty IDs...")
+                    sys.stdout.flush()
             
             current_id += 1
             time.sleep(0.1)
         
         print(f"✓ Discovered {len(new_comments)} new comments")
+        sys.stdout.flush()
         return new_comments, active_media
     
     def refresh_active_media(self, media_ids, existing_comment_ids):
@@ -215,6 +225,7 @@ class DantotsuDailySync:
             return []
         
         print(f"🔄 Refreshing {len(media_ids)} active media threads...")
+        sys.stdout.flush()
         new_comments = []
         
         for idx, media_id in enumerate(media_ids, 1):
@@ -227,8 +238,10 @@ class DantotsuDailySync:
                     new_comments.append(self.format_row(c))
             
             print(f"  [{idx}/{len(media_ids)}] Media {media_id}: {len(comments)} comments fetched")
+            sys.stdout.flush()
         
         print(f"✓ Found {len(new_comments)} new comments from active threads")
+        sys.stdout.flush()
         return new_comments
     
     def run_daily_sync(self):
