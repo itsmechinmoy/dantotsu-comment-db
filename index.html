@@ -52,7 +52,23 @@
     .avatar-img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; vertical-align: middle; border: 1px solid #333; }
     .col-content { min-width: 180px; max-width: 350px; line-height: 1.4; }
     .col-content p { margin: 4px 0; }
-    .col-content img { max-width: 100%; max-height: 400px; object-fit: contain; height: auto; display: block; margin-top: 5px; border-radius: 4px; }
+    
+    /* FIX: Image & Iframe containment to prevent overflowing */
+    .col-content img, .col-content iframe { 
+        max-width: 100%; 
+        max-height: 400px; 
+        object-fit: contain; 
+        height: auto; 
+        display: block; 
+        margin-top: 5px; 
+        border-radius: 4px;
+        border: none;
+    }
+    /* Specific height fix for iframes since 'height: auto' doesn't always work for videos */
+    .col-content iframe {
+        aspect-ratio: 16 / 9;
+        width: 100%;
+    }
     
     .spoiler { background: #42464d; color: #42464d; padding: 0 2px; border-radius: 3px; cursor: pointer; transition: color 0.2s; }
     .spoiler:hover { background: #4f545c; }
