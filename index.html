@@ -121,20 +121,21 @@
     let csvString = "";
     let currentSort = { key: 'comment_id', ascending: false };
     
-    // Improved AniList Markdown Handling
     function parseAnilistMarkdown(text) {
         if (!text) return "";
         let processed = text;
-        // 1. Process Spoilers first to protect content
-        processed = processed.replace(/<!([\s\S]*?)!>/g, (match, content) => {
-            return `<span class="spoiler" onclick="this.classList.toggle('revealed')">${marked.parseInline(content)}</span>`;
-        });
-        processed = processed.replace(/\|\|([\s\S]*?)\|\|/g, (match, content) => {
-            return `<span class="spoiler" onclick="this.classList.toggle('revealed')">${marked.parseInline(content)}</span>`;
-        });
-        // 2. Handle Underline __text__
+        
+        // Handle AniList Escapes like \*official\*
+        processed = processed.replace(/\\\*/g, '&#42;');
+        
+        // Process AniList Spoilers with inner MD support
+        processed = processed.replace(/<!([\s\S]*?)!>/g, (m, c) => `<span class="spoiler" onclick="this.classList.toggle('revealed')">${marked.parseInline(c)}</span>`);
+        processed = processed.replace(/\|\|([\s\S]*?)\|\|/g, (m, c) => `<span class="spoiler" onclick="this.classList.toggle('revealed')">${marked.parseInline(c)}</span>`);
+        
+        // AniList Specific: __underline__, ~~strike~~
         processed = processed.replace(/__([\s\S]*?)__/g, '<u>$1</u>');
-        // 3. Handle images/links/bold/italics via marked
+        processed = processed.replace(/~~([\s\S]*?)~~/g, '<del>$1</del>');
+        
         return marked.parse(processed);
     }
 
