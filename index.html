@@ -43,7 +43,21 @@
     .sort-icon { font-size: 9px; margin-left: 5px; opacity: 0.7; }
     td { padding: 8px 10px; border: 1px solid #232935; word-break: break-word; }
     .col-user-id { white-space: nowrap; padding-right: 15px; }
-    .mod-badge { color: #ff9800; font-weight: bold; border: 1px solid #ff9800; padding: 1px 3px; border-radius: 3px; font-size: 9px; }
+
+    /* Centered Badge Styling */
+    .mod-badge, .admin-badge { 
+        display: inline-block;
+        vertical-align: middle;
+        font-weight: bold; 
+        padding: 1px 3px; 
+        border-radius: 3px; 
+        font-size: 9px; 
+        line-height: 1;
+        margin-left: 4px;
+    }
+    .mod-badge { color: #ff9800; border: 1px solid #ff9800; }
+    .admin-badge { color: #ff5252; border: 1px solid #ff5252; }
+
     .deleted-row { opacity: 0.6; background: #2a1515 !important; }
     .link { color: #3dbbee; text-decoration: none; font-weight: bold; cursor: pointer; }
     .link:hover { text-decoration: underline; }
@@ -53,7 +67,6 @@
     .col-content { min-width: 180px; max-width: 350px; line-height: 1.4; }
     .col-content p { margin: 4px 0; }
     
-    /* FIX: Image & Iframe containment to prevent overflowing */
     .col-content img, .col-content iframe { 
         max-width: 100%; 
         max-height: 400px; 
@@ -64,7 +77,6 @@
         border-radius: 4px;
         border: none;
     }
-    /* Specific height fix for iframes since 'height: auto' doesn't always work for videos */
     .col-content iframe {
         aspect-ratio: 16 / 9;
         width: 100%;
@@ -140,18 +152,11 @@
     function parseAnilistMarkdown(text) {
         if (!text) return "";
         let processed = text;
-        
-        // Handle AniList Escapes like \*official\*
         processed = processed.replace(/\\\*/g, '&#42;');
-        
-        // Process AniList Spoilers with inner MD support
         processed = processed.replace(/<!([\s\S]*?)!>/g, (m, c) => `<span class="spoiler" onclick="this.classList.toggle('revealed')">${marked.parseInline(c)}</span>`);
         processed = processed.replace(/\|\|([\s\S]*?)\|\|/g, (m, c) => `<span class="spoiler" onclick="this.classList.toggle('revealed')">${marked.parseInline(c)}</span>`);
-        
-        // AniList Specific: __underline__, ~~strike~~
         processed = processed.replace(/__([\s\S]*?)__/g, '<u>$1</u>');
         processed = processed.replace(/~~([\s\S]*?)~~/g, '<del>$1</del>');
-        
         return marked.parse(processed);
     }
 
@@ -224,7 +229,18 @@
       document.getElementById('currentCount').innerText = data.length;
       document.getElementById('totalCountDisplay').innerText = displayTotal;
       body.innerHTML = data.map(row => {
-        const isDeleted = row.deleted === '1', isMod = row.is_mod === '1' || row.is_admin === '1';
+        const isDeleted = row.deleted === '1';
+        const isMod = row.is_mod === '1';
+        const isAdmin = row.is_admin === '1';
+
+        // Override logic: Admin badge overrides Mod badge
+        let badgeHtml = '';
+        if (isAdmin) {
+            badgeHtml = '<span class="admin-badge">ADMIN</span>';
+        } else if (isMod) {
+            badgeHtml = '<span class="mod-badge">MOD</span>';
+        }
+
         const formattedContent = parseAnilistMarkdown(row.content || "");
         let displayDate = "N/A";
         if (row.timestamp) {
@@ -244,7 +260,7 @@
             <td align="center">${row.upvotes}</td>
             <td align="center">${row.downvotes}</td>
             <td align="center">${formatBool(row.user_vote_type)}</td>
-            <td><strong>${row.username}</strong> ${isMod ? '<span class="mod-badge">MOD</span>' : ''}</td>
+            <td style="white-space:nowrap"><strong>${row.username}</strong>${badgeHtml}</td>
             <td align="center"><img src="${row.profile_picture_url}" class="avatar-img" onerror="this.src='https://files.catbox.moe/1f7ay7.png'"></td>
             <td align="center">${formatBool(row.is_mod)}</td>
             <td align="center">${formatBool(row.is_admin)}</td>
