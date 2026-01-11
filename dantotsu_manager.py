@@ -19,8 +19,8 @@ APP_AUTH_KEY = "6*45Qp%W2RS@t38jkXoSKY588Ynj%n"
 API_ADDRESS = "https://api.dantotsu.app"
 DISCORD_TOKEN = os.environ.get("DISCORD_TOKEN")
 AL_TOKEN = os.environ.get("AL_TOKEN")
-FEED_CHANNEL_ID = "1180378569109671987"
-MOD_BOT_ID = "1212248844398493717"
+GUILD_ID = "1163949787213746248"  # Dantotsu Discord server
+MOD_BOT_ID = "1212248844398493717"  # Dantotsu Comment Bot
 DB_PATH = Path("dantotsu_global_db.csv")
 
 # CSV headers
@@ -152,37 +152,70 @@ class DantotsuDailySync:
         return all_comments
     
     def check_discord_deletions(self, existing_comment_ids):
-        """Check Discord for mod deletions"""
+        """Check Discord server-wide for mod deletions"""
         if not DISCORD_TOKEN:
             print("⚠️  No Discord token, skipping deletion check")
             return set()
         
-        print("🔨 Checking Discord for mod deletions...")
+        print("🔨 Checking Discord for mod deletions (server-wide)...")
+        sys.stdout.flush()
         deleted_ids = set()
         
         try:
+            # Search server-wide for bot's deletion messages
+            # Using Discord's search API to find messages from the bot
+            
+            # Search query: messages from bot containing "has been deleted"
+            search_url = f"https://discord.com/api/v9/guilds/{GUILD_ID}/messages/search"
+            params = {
+                "author_id": bot_user_id,
+                "content": "has been deleted",
+                "include_nsfw": "true"
+            }
+            
             r = requests.get(
-                f"https://discord.com/api/v9/channels/{FEED_CHANNEL_ID}/messages?limit=100",
+                search_url,
                 headers={"Authorization": DISCORD_TOKEN},
-                timeout=10
+                params=params,
+                timeout=15
             )
             
             if r.status_code == 200:
-                for msg in r.json():
-                    content = msg.get('content', '')
-                    author_id = str(msg.get('author', {}).get('id', ''))
-                    
-                    # Check if message is from mod bot
-                    if MOD_BOT_ID in author_id:
-                        # Extract comment ID from deletion message
-                        match = re.search(r'comment[_\s]*id[:\s]+(\d+)', content, re.IGNORECASE)
+                data = r.json()
+                messages = data.get('messages', [])
+                
+                # Discord returns messages in nested arrays
+                for msg_group in messages:
+                    if isinstance(msg_group, list):
+                        for msg in msg_group:
+                            content = msg.get('content', '')
+                            # Extract comment ID from "Comment with id 1148 has been deleted"
+                            match = re.search(r'Comment with id (\d+) has been deleted', content, re.IGNORECASE)
+                            if match:
+                                cid = int(match.group(1))
+                                if cid in existing_comment_ids:
+                                    deleted_ids.add(cid)
+                                    print(f"  Found deletion: Comment {cid}")
+                                    sys.stdout.flush()
+                    elif isinstance(msg_group, dict):
+                        content = msg_group.get('content', '')
+                        match = re.search(r'Comment with id (\d+) has been deleted', content, re.IGNORECASE)
                         if match:
                             cid = int(match.group(1))
                             if cid in existing_comment_ids:
                                 deleted_ids.add(cid)
                                 print(f"  Found deletion: Comment {cid}")
+                                sys.stdout.flush()
+                
+                print(f"✓ Scanned deletion messages, found {len(deleted_ids)} deletions")
+                sys.stdout.flush()
+            else:
+                print(f"⚠️  Discord search returned {r.status_code}")
+                sys.stdout.flush()
+                
         except Exception as e:
             print(f"⚠️  Discord check failed: {e}")
+            sys.stdout.flush()
         
         return deleted_ids
     
@@ -195,7 +228,7 @@ class DantotsuDailySync:
         active_media = set()
         consecutive_404s = 0
         current_id = last_known_id + 1
-        max_consecutive_404s = 10  # Stop after 10 empty IDs
+        max_consecutive_404s = 50  # Stop after 50 empty IDs
         
         while consecutive_404s < max_consecutive_404s:
             comment = self.fetch_single_comment(current_id)
@@ -281,11 +314,21 @@ class DantotsuDailySync:
         thread_comments = self.refresh_active_media(active_media, existing_comment_ids)
         new_comments.extend(thread_comments)
         
-        # 3. Check for deletions
+        # 3. Check for deletions and update content
         deleted_ids = self.check_discord_deletions(existing_comment_ids)
         if deleted_ids:
-            df.loc[df['comment_id'].isin(deleted_ids), 'deleted'] = 1
-            print(f"✓ Marked {len(deleted_ids)} comments as deleted")
+            # Only update comments that are NOT already marked as deleted
+            not_deleted_mask = (df['comment_id'].isin(deleted_ids)) & (df['deleted'] != 1)
+            newly_deleted_count = not_deleted_mask.sum()
+            
+            if newly_deleted_count > 0:
+                # Mark as deleted AND change content to [deleted]
+                df.loc[not_deleted_mask, 'deleted'] = 1
+                df.loc[not_deleted_mask, 'content'] = '[deleted]'
+                print(f"✓ Marked {newly_deleted_count} NEW deletions (skipped {len(deleted_ids) - newly_deleted_count} already deleted)")
+            else:
+                print(f"✓ Found {len(deleted_ids)} deletion messages but all were already marked")
+            sys.stdout.flush()
         
         # 4. Merge new data
         if new_comments:
