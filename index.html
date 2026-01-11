@@ -54,7 +54,6 @@
     .col-content p { margin: 4px 0; }
     .col-content img { max-width: 100%; max-height: 400px; object-fit: contain; height: auto; display: block; margin-top: 5px; border-radius: 4px; }
     
-    /* AniList Spoiler Styles */
     .spoiler { background: #42464d; color: #42464d; padding: 0 2px; border-radius: 3px; cursor: pointer; transition: color 0.2s; }
     .spoiler:hover { background: #4f545c; }
     .spoiler.revealed { background: rgba(255,255,255,0.1); color: inherit; }
@@ -122,14 +121,20 @@
     let csvString = "";
     let currentSort = { key: 'comment_id', ascending: false };
     
-    // AniList Markdown Handling
+    // Improved AniList Markdown Handling
     function parseAnilistMarkdown(text) {
         if (!text) return "";
-        // Handle AniList spoilers: <! spoiler !> and || spoiler ||
-        let processed = text.replace(/<!([\s\S]*?)!>/g, '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
-        processed = processed.replace(/\|\|([\s\S]*?)\|\|/g, '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
-        // Handle __underline__ (AniList) -> mapped to <u>
+        let processed = text;
+        // 1. Process Spoilers first to protect content
+        processed = processed.replace(/<!([\s\S]*?)!>/g, (match, content) => {
+            return `<span class="spoiler" onclick="this.classList.toggle('revealed')">${marked.parseInline(content)}</span>`;
+        });
+        processed = processed.replace(/\|\|([\s\S]*?)\|\|/g, (match, content) => {
+            return `<span class="spoiler" onclick="this.classList.toggle('revealed')">${marked.parseInline(content)}</span>`;
+        });
+        // 2. Handle Underline __text__
         processed = processed.replace(/__([\s\S]*?)__/g, '<u>$1</u>');
+        // 3. Handle images/links/bold/italics via marked
         return marked.parse(processed);
     }
 
