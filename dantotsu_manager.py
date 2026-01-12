@@ -345,7 +345,21 @@ class DantotsuDailySync:
         df = df.drop_duplicates(subset=['comment_id'], keep='last')
         df = df.sort_values('comment_id')
         
-        # 6. Save
+        # 6. Fix data types - ensure integers don't have .0
+        int_columns = ['comment_id', 'user_id', 'media_id', 'parent_comment_id', 
+                       'deleted', 'tag', 'upvotes', 'downvotes', 'user_vote_type',
+                       'is_mod', 'is_admin', 'reply_count', 'total_votes']
+        
+        for col in int_columns:
+            if col in df.columns:
+                # Convert to Int64 (pandas nullable integer) to handle NaN properly
+                df[col] = pd.to_numeric(df[col], errors='coerce')
+                df[col] = df[col].fillna(0).astype('Int64')
+                # Replace 0 with empty string for parent_comment_id and tag if needed
+                if col in ['parent_comment_id', 'tag']:
+                    df[col] = df[col].replace(0, pd.NA)
+        
+        # 7. Save
         df.to_csv(DB_PATH, sep='\t', index=False)
         
         final_count = len(df)
