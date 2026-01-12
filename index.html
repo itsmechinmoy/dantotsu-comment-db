@@ -27,12 +27,12 @@
     .download-btn:hover { background: #2a9cc9; }
     #resetViewBtn { background: #ff5252; color: white; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; display: none; }
     
-    /* GitHub Style Dynamic Activity Grid */
+    /* GitHub Style Dynamic Activity Grid - Refined */
     .stats-container { margin-top: 10px; display: table; width: auto; }
     .status-bar-wrapper { display: flex; align-items: center; gap: 6px; margin-top: 5px; width: 100%; }
-    .activity-grid { display: flex; flex-wrap: wrap; gap: 2px; flex-grow: 1; min-width: 50px; justify-content: center; }
+    .activity-grid { display: flex; flex-wrap: wrap; gap: 2px; flex-grow: 1; min-width: 50px; justify-content: flex-start; }
     .activity-box { width: 8px; height: 8px; border-radius: 1px; background: #2a1515; flex-shrink: 0; }
-    .activity-box.active { background: #3dbbee; }
+    .activity-box.active { background: #2ea44f; } /* Green Active Color */
     .status-label { font-size: 10px; font-weight: bold; white-space: nowrap; opacity: 0.9; }
 
     .table-container { 
@@ -69,10 +69,15 @@
     .col-content { min-width: 180px; max-width: 350px; line-height: 1.4; }
     .col-content p { margin: 4px 0; }
     
+    /* FIX: Image Grid and Vertical Alignment */
     .col-content img { 
-        max-width: 48%; max-height: 300px; 
-        object-fit: contain; display: inline-block; 
-        margin: 2px; border-radius: 4px;
+        max-width: 48%; 
+        max-height: 300px; 
+        object-fit: contain; 
+        display: inline-block; 
+        vertical-align: top; /* Ensures text stays above and images align top-to-top */
+        margin: 2px; 
+        border-radius: 4px;
     }
     .col-content iframe { 
         max-width: 100%; max-height: 200px; 
@@ -112,9 +117,9 @@
       <div class="stats-container" id="statsAnchor">
         <span id="countText" style="font-size: 13px;">Comments: <strong id="currentCount">0</strong> / <strong id="totalCountDisplay">0</strong></span>
         <div class="status-bar-wrapper">
-            <span class="status-label" style="color: #3dbbee">A: <span id="activeCountLabel">0</span></span>
+            <span class="status-label" id="activeCountLabel" style="color: #2ea44f">0</span>
             <div class="activity-grid" id="activityGrid"></div>
-            <span class="status-label" style="color: #ff5252">D: <span id="deletedCountLabel">0</span></span>
+            <span class="status-label" id="deletedCountLabel" style="color: #ff5252">0</span>
         </div>
       </div>
     </div>
@@ -195,10 +200,10 @@
         
         const grid = document.getElementById('activityGrid');
         const containerWidth = document.getElementById('countText').offsetWidth;
-        const labelWidths = 80; // Estimated space for A: and D: labels
+        const labelWidths = 65; 
         const availableWidth = containerWidth - labelWidths;
         
-        const numBoxes = Math.max(5, Math.floor(availableWidth / 10)); // Calculate how many boxes fit
+        const numBoxes = Math.max(5, Math.floor(availableWidth / 10));
         const activeRatio = Math.round((activeCount / total) * numBoxes);
         
         grid.innerHTML = '';
