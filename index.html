@@ -74,20 +74,30 @@
     .col-content { min-width: 180px; max-width: 350px; line-height: 1.4; }
     .col-content p { margin: 4px 0; }
     
+    /* 2x2 Image Grid Layout */
     .md-image-container {
         display: flex;
         flex-wrap: wrap;
         gap: 4px;
         margin-top: 5px;
     }
-    .col-content img { 
+    /* Square boxes for grid images */
+    .md-image-container img { 
         width: calc(50% - 4px); 
         aspect-ratio: 1 / 1;    
         object-fit: cover;      
         max-height: 300px; 
         border-radius: 4px;
     }
+    /* Standard image handling for standalone/linked images */
+    .col-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 4px;
+        vertical-align: top;
+    }
 
+    /* YouTube Restored sizing */
     .col-content iframe { 
         width: 100%; 
         max-width: 100%;
@@ -175,34 +185,40 @@
     
     const renderer = new marked.Renderer();
     
-    // Explicitly handle image rendering within links
+    // Correctly handle images with all 3 parameters
     renderer.image = function(href, title, text) {
-        return `<img src="${href}" alt="${text}" title="${title || ''}">`;
+        return `<img src="${href}" alt="${text || 'image'}" title="${title || ''}">`;
     };
 
     function parseAnilistMarkdown(text) {
         if (!text) return "";
         let processed = text;
 
-        // Escape asterisks
         processed = processed.replace(/\\\*/g, '&#42;');
-        
-        // AniList Spoilers
         processed = processed.replace(/<!([\s\S]*?)!>/g, (m, c) => `<span class="spoiler" onclick="this.classList.toggle('revealed')">${marked.parseInline(c)}</span>`);
         processed = processed.replace(/\|\|([\s\S]*?)\|\|/g, (m, c) => `<span class="spoiler" onclick="this.classList.toggle('revealed')">${marked.parseInline(c)}</span>`);
-        
-        // Underline and Strike
         processed = processed.replace(/__([\s\S]*?)__/g, '<u>$1</u>');
         processed = processed.replace(/~~([\s\S]*?)~~/g, '<del>$1</del>');
         
-        // Render Markdown
         let html = marked.parse(processed, { renderer });
 
-        // FIX: Wrap images in container ONLY if they aren't part of a link to prevent breaking linked images
-        // We look for standalone <img> tags or groups of them not immediately wrapped by <a>
-        const imageRegex = /(<img[^>]+>)+/g;
-        html = html.replace(imageRegex, (match) => {
-            return `<div class="md-image-container">${match}</div>`;
+        // Logic to wrap standalone image groups in a grid container WITHOUT breaking linked images
+        // This looks for <img> tags that are NOT inside an <a> tag
+        const placeholder = "LINKED_IMG_PLACEHOLDER";
+        let linkedImages = [];
+        
+        // Temporarily remove linked images from the string
+        html = html.replace(/<a [^>]+>.*?<img [^>]+>.*?<\/a>/g, (match) => {
+            linkedImages.push(match);
+            return placeholder;
+        });
+
+        // Wrap the remaining standalone images
+        html = html.replace(/(<img[^>]+>)+/g, match => `<div class="md-image-container">${match}</div>`);
+
+        // Put linked images back
+        linkedImages.forEach(link => {
+            html = html.replace(placeholder, link);
         });
 
         return html;
@@ -236,10 +252,11 @@
         document.getElementById('deletedCountLabel').innerText = deletedCount;
         
         const grid = document.getElementById('activityGrid');
-        const containerWidth = document.getElementById('countText').offsetWidth;
-        const availableWidth = containerWidth - 65; 
+        const countTextEl = document.getElementById('countText');
+        if(!countTextEl) return;
+        const containerWidth = countTextEl.offsetWidth;
         
-        const numBoxes = Math.max(5, Math.floor(availableWidth / 10));
+        const numBoxes = Math.max(5, Math.floor((containerWidth - 65) / 10));
         const activeRatio = Math.round((activeCount / total) * numBoxes);
         
         grid.innerHTML = '';
