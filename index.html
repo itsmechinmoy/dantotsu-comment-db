@@ -74,7 +74,6 @@
     .col-content { min-width: 180px; max-width: 350px; line-height: 1.4; }
     .col-content p { margin: 4px 0; }
     
-    /* 2x2 Image Grid Layout */
     .md-image-container {
         display: flex;
         flex-wrap: wrap;
@@ -94,10 +93,10 @@
         max-width: 100%;
         height: auto;
         border-radius: 4px;
-        vertical-align: middle;
+        vertical-align: top;
     }
 
-    /* YouTube iframe restored */
+    /* YouTube iframe sizing */
     .col-content iframe { 
         width: 100%; 
         max-width: 100%;
@@ -185,9 +184,13 @@
     
     const renderer = new marked.Renderer();
     
-    // Fix the renderer parameters
-    renderer.image = function(href, title, text) {
-        return `<img src="${href}" alt="${text || 'image'}" title="${title || ''}">`;
+    // Correctly handle marked.js image renderer (handles both old and new object-based versions)
+    renderer.image = function(src, title, alt) {
+        // In newer marked versions, args are passed as an object
+        const href = typeof src === 'object' ? src.href : src;
+        const text = typeof src === 'object' ? src.text : alt;
+        const head = typeof src === 'object' ? src.title : title;
+        return `<img src="${href}" alt="${text || 'image'}" title="${head || ''}">`;
     };
 
     function parseAnilistMarkdown(text) {
@@ -203,21 +206,20 @@
         let html = marked.parse(processed, { renderer });
 
         // Safely wrap standalone image groups in a grid container WITHOUT breaking linked images
-        const placeholder = "LINKED_IMG_STASH";
-        let stash = [];
-        
-        // Remove linked images temporarily
+        // We use a temporary token to hide images inside <a> tags
+        const tokens = [];
         html = html.replace(/<a [^>]+>.*?<img [^>]+>.*?<\/a>/g, (match) => {
-            stash.push(match);
-            return placeholder;
+            const token = `###LINKED_IMG_${tokens.length}###`;
+            tokens.push({ token, match });
+            return token;
         });
 
-        // Wrap standalone images
+        // Wrap standalone images (images that were not inside links)
         html = html.replace(/(<img[^>]+>)+/g, match => `<div class="md-image-container">${match}</div>`);
 
-        // Restore links
-        stash.forEach(item => {
-            html = html.replace(placeholder, item);
+        // Put linked images back
+        tokens.forEach(({ token, match }) => {
+            html = html.replace(token, match);
         });
 
         return html;
@@ -247,12 +249,14 @@
         const deletedCount = rawData.filter(r => r.deleted === '1').length;
         const activeCount = total - deletedCount;
         
-        document.getElementById('activeCountLabel').innerText = activeCount;
-        document.getElementById('deletedCountLabel').innerText = deletedCount;
+        const activeLabel = document.getElementById('activeCountLabel');
+        const deletedLabel = document.getElementById('deletedCountLabel');
+        if(activeLabel) activeLabel.innerText = activeCount;
+        if(deletedLabel) deletedLabel.innerText = deletedCount;
         
         const grid = document.getElementById('activityGrid');
         const countTextEl = document.getElementById('countText');
-        if(!countTextEl) return;
+        if(!countTextEl || !grid) return;
         
         const numBoxes = Math.max(5, Math.floor((countTextEl.offsetWidth - 65) / 10));
         const activeRatio = Math.round((activeCount / total) * numBoxes);
