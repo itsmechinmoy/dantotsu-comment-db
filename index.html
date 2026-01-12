@@ -94,7 +94,7 @@
         max-width: 100%;
         height: auto;
         border-radius: 4px;
-        vertical-align: top;
+        vertical-align: middle;
     }
 
     /* YouTube iframe restored */
@@ -185,7 +185,7 @@
     
     const renderer = new marked.Renderer();
     
-    // Correct image mapping
+    // Fix the renderer parameters
     renderer.image = function(href, title, text) {
         return `<img src="${href}" alt="${text || 'image'}" title="${title || ''}">`;
     };
@@ -202,7 +202,7 @@
         
         let html = marked.parse(processed, { renderer });
 
-        // Safely wrap standalone images into containers without breaking <a> links
+        // Safely wrap standalone image groups in a grid container WITHOUT breaking linked images
         const placeholder = "LINKED_IMG_STASH";
         let stash = [];
         
