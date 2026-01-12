@@ -27,13 +27,13 @@
     .download-btn:hover { background: #2a9cc9; }
     #resetViewBtn { background: #ff5252; color: white; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; display: none; }
     
-    /* GitHub Style Activity Boxes */
-    .stats-container { margin-top: 10px; display: inline-flex; flex-direction: column; width: fit-content; }
-    .status-bar-wrapper { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
-    .activity-grid { display: flex; gap: 2px; }
-    .activity-box { width: 10px; height: 10px; border-radius: 2px; background: #2a1515; }
+    /* GitHub Style Dynamic Activity Grid */
+    .stats-container { margin-top: 10px; display: table; width: auto; }
+    .status-bar-wrapper { display: flex; align-items: center; gap: 6px; margin-top: 5px; width: 100%; }
+    .activity-grid { display: flex; flex-wrap: wrap; gap: 2px; flex-grow: 1; min-width: 50px; justify-content: center; }
+    .activity-box { width: 8px; height: 8px; border-radius: 1px; background: #2a1515; flex-shrink: 0; }
     .activity-box.active { background: #3dbbee; }
-    .status-label { font-size: 11px; font-weight: bold; white-space: nowrap; }
+    .status-label { font-size: 10px; font-weight: bold; white-space: nowrap; opacity: 0.9; }
 
     .table-container { 
         background: #151921; border-radius: 8px; border: 1px solid #232935; 
@@ -69,18 +69,16 @@
     .col-content { min-width: 180px; max-width: 350px; line-height: 1.4; }
     .col-content p { margin: 4px 0; }
     
-    /* FIX: Image & Iframe containment */
-    .col-content img, .col-content iframe { 
-        max-width: 100%; 
-        max-height: 400px; 
-        object-fit: contain; 
-        height: auto; 
-        display: block; 
-        margin-top: 5px; 
-        border-radius: 4px;
-        border: none;
+    .col-content img { 
+        max-width: 48%; max-height: 300px; 
+        object-fit: contain; display: inline-block; 
+        margin: 2px; border-radius: 4px;
     }
-    .col-content iframe { aspect-ratio: 16 / 9; width: 100%; }
+    .col-content iframe { 
+        max-width: 100%; max-height: 200px; 
+        display: block; margin-top: 5px; 
+        border-radius: 4px; border: none; aspect-ratio: 16 / 9;
+    }
     
     .spoiler { background: #42464d; color: #42464d; padding: 0 2px; border-radius: 3px; cursor: pointer; transition: color 0.2s; }
     .spoiler:hover { background: #4f545c; }
@@ -111,13 +109,12 @@
           <option value="all">ALL (Slow)</option>
         </select>
       </label>
-      <div class="stats-container">
-        <span style="font-size: 13px;">Comments: <strong id="currentCount">0</strong> / <strong id="totalCountDisplay">0</strong></span>
+      <div class="stats-container" id="statsAnchor">
+        <span id="countText" style="font-size: 13px;">Comments: <strong id="currentCount">0</strong> / <strong id="totalCountDisplay">0</strong></span>
         <div class="status-bar-wrapper">
-            <span class="status-label" style="color: #3dbbee">Active: <span id="activeCountLabel">0</span></span>
-            <div class="activity-grid" id="activityGrid">
-                </div>
-            <span class="status-label" style="color: #ff5252">Deleted: <span id="deletedCountLabel">0</span></span>
+            <span class="status-label" style="color: #3dbbee">A: <span id="activeCountLabel">0</span></span>
+            <div class="activity-grid" id="activityGrid"></div>
+            <span class="status-label" style="color: #ff5252">D: <span id="deletedCountLabel">0</span></span>
         </div>
       </div>
     </div>
@@ -179,9 +176,9 @@
           header: true, delimiter: "\t", skipEmptyLines: true, 
           complete: (results) => {
               rawData = results.data.filter(row => row.comment_id && row.comment_id.trim() !== "");
-              calculateGlobalStats();
               sortData();
               updateView();
+              window.addEventListener('resize', calculateGlobalStats);
           }
         });
       } catch (e) { console.error("Database fetch failed", e); }
@@ -196,11 +193,16 @@
         document.getElementById('activeCountLabel').innerText = activeCount;
         document.getElementById('deletedCountLabel').innerText = deletedCount;
         
-        const activeRatio = Math.round((activeCount / total) * 20); // Scale to 20 boxes
         const grid = document.getElementById('activityGrid');
-        grid.innerHTML = '';
+        const containerWidth = document.getElementById('countText').offsetWidth;
+        const labelWidths = 80; // Estimated space for A: and D: labels
+        const availableWidth = containerWidth - labelWidths;
         
-        for (let i = 0; i < 20; i++) {
+        const numBoxes = Math.max(5, Math.floor(availableWidth / 10)); // Calculate how many boxes fit
+        const activeRatio = Math.round((activeCount / total) * numBoxes);
+        
+        grid.innerHTML = '';
+        for (let i = 0; i < numBoxes; i++) {
             const box = document.createElement('div');
             box.className = 'activity-box' + (i < activeRatio ? ' active' : '');
             grid.appendChild(box);
@@ -301,6 +303,7 @@
         );
         let displayData = (limit !== 'all') ? filtered.slice(0, parseInt(limit)) : filtered;
         renderTable(displayData, filtered.length);
+        calculateGlobalStats();
     }
 
     const scrollContainer = document.getElementById("scrollContainer");
