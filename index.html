@@ -26,9 +26,20 @@
     .download-btn { background: #3dbbee; color: #0b0e14; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; }
     .download-btn:hover { background: #2a9cc9; }
     #resetViewBtn { background: #ff5252; color: white; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; display: none; }
+    
+    /* Stats Styling */
+    .stats-container { margin-top: 10px; font-size: 12px; display: flex; flex-direction: column; gap: 5px; }
+    .status-bar-wrapper { display: flex; align-items: center; gap: 10px; }
+    .status-bar { 
+        height: 12px; width: 200px; background: #2a1515; border-radius: 3px; 
+        overflow: hidden; display: flex; border: 1px solid #232935;
+    }
+    .status-fill-active { background: #3dbbee; height: 100%; transition: width 0.5s ease; }
+    .status-label { opacity: 0.8; font-weight: bold; }
+
     .table-container { 
         background: #151921; border-radius: 8px; border: 1px solid #232935; 
-        width: 100%; max-height: calc(100vh - 200px); 
+        width: 100%; max-height: calc(100vh - 250px); 
         overflow: auto; -ms-overflow-style: none; scrollbar-width: none; position: relative;
     }
     .table-container::-webkit-scrollbar { display: none; }
@@ -44,16 +55,9 @@
     td { padding: 8px 10px; border: 1px solid #232935; word-break: break-word; }
     .col-user-id { white-space: nowrap; padding-right: 15px; }
 
-    /* Centered Badge Styling */
     .mod-badge, .admin-badge { 
-        display: inline-block;
-        vertical-align: middle;
-        font-weight: bold; 
-        padding: 1px 3px; 
-        border-radius: 3px; 
-        font-size: 9px; 
-        line-height: 1;
-        margin-left: 4px;
+        display: inline-block; vertical-align: middle; font-weight: bold; 
+        padding: 1px 3px; border-radius: 3px; font-size: 9px; line-height: 1; margin-left: 4px;
     }
     .mod-badge { color: #ff9800; border: 1px solid #ff9800; }
     .admin-badge { color: #ff5252; border: 1px solid #ff5252; }
@@ -66,22 +70,11 @@
     .avatar-img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; vertical-align: middle; border: 1px solid #333; }
     .col-content { min-width: 180px; max-width: 350px; line-height: 1.4; }
     .col-content p { margin: 4px 0; }
-    
     .col-content img, .col-content iframe { 
-        max-width: 100%; 
-        max-height: 400px; 
-        object-fit: contain; 
-        height: auto; 
-        display: block; 
-        margin-top: 5px; 
-        border-radius: 4px;
-        border: none;
+        max-width: 100%; max-height: 400px; object-fit: contain; 
+        height: auto; display: block; margin-top: 5px; border-radius: 4px; border: none;
     }
-    .col-content iframe {
-        aspect-ratio: 16 / 9;
-        width: 100%;
-    }
-    
+    .col-content iframe { aspect-ratio: 16 / 9; width: 100%; }
     .spoiler { background: #42464d; color: #42464d; padding: 0 2px; border-radius: 3px; cursor: pointer; transition: color 0.2s; }
     .spoiler:hover { background: #4f545c; }
     .spoiler.revealed { background: rgba(255,255,255,0.1); color: inherit; }
@@ -111,7 +104,17 @@
           <option value="all">ALL (Slow)</option>
         </select>
       </label>
-      <span>Comments: <strong id="currentCount">0</strong> / <strong id="totalCountDisplay">0</strong></span>
+      <div class="stats-container">
+        <span>Comments: <strong id="currentCount">0</strong> / <strong id="totalCountDisplay">0</strong></span>
+        <div class="status-bar-wrapper">
+            <span class="status-label" style="color: #3dbbee">Active</span>
+            <div class="status-bar">
+                <div id="activeFill" class="status-fill-active" style="width: 0%"></div>
+            </div>
+            <span class="status-label" style="color: #ff5252">Deleted</span>
+            <span id="statusPercentage" style="margin-left: 5px; opacity: 0.6;">(0% Active)</span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -171,11 +174,23 @@
           header: true, delimiter: "\t", skipEmptyLines: true, 
           complete: (results) => {
               rawData = results.data.filter(row => row.comment_id && row.comment_id.trim() !== "");
+              calculateGlobalStats();
               sortData();
               updateView();
           }
         });
       } catch (e) { console.error("Database fetch failed", e); }
+    }
+
+    function calculateGlobalStats() {
+        const total = rawData.length;
+        if (total === 0) return;
+        const deletedCount = rawData.filter(r => r.deleted === '1').length;
+        const activeCount = total - deletedCount;
+        const activePercent = ((activeCount / total) * 100).toFixed(1);
+        
+        document.getElementById('activeFill').style.width = activePercent + '%';
+        document.getElementById('statusPercentage').innerText = `(${activePercent}% Active)`;
     }
 
     function sortData() {
@@ -229,18 +244,8 @@
       document.getElementById('currentCount').innerText = data.length;
       document.getElementById('totalCountDisplay').innerText = displayTotal;
       body.innerHTML = data.map(row => {
-        const isDeleted = row.deleted === '1';
-        const isMod = row.is_mod === '1';
-        const isAdmin = row.is_admin === '1';
-
-        // Override logic: Admin badge overrides Mod badge
-        let badgeHtml = '';
-        if (isAdmin) {
-            badgeHtml = '<span class="admin-badge">ADMIN</span>';
-        } else if (isMod) {
-            badgeHtml = '<span class="mod-badge">MOD</span>';
-        }
-
+        const isDeleted = row.deleted === '1', isMod = row.is_mod === '1', isAdmin = row.is_admin === '1';
+        let badgeHtml = isAdmin ? '<span class="admin-badge">ADMIN</span>' : (isMod ? '<span class="mod-badge">MOD</span>' : '');
         const formattedContent = parseAnilistMarkdown(row.content || "");
         let displayDate = "N/A";
         if (row.timestamp) {
