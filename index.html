@@ -27,19 +27,17 @@
     .download-btn:hover { background: #2a9cc9; }
     #resetViewBtn { background: #ff5252; color: white; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; display: none; }
     
-    /* Stats Styling */
-    .stats-container { margin-top: 10px; font-size: 12px; display: flex; flex-direction: column; gap: 5px; }
-    .status-bar-wrapper { display: flex; align-items: center; gap: 10px; }
-    .status-bar { 
-        height: 12px; width: 200px; background: #2a1515; border-radius: 3px; 
-        overflow: hidden; display: flex; border: 1px solid #232935;
-    }
-    .status-fill-active { background: #3dbbee; height: 100%; transition: width 0.5s ease; }
-    .status-label { opacity: 0.8; font-weight: bold; }
+    /* GitHub Style Activity Boxes */
+    .stats-container { margin-top: 10px; display: inline-flex; flex-direction: column; width: fit-content; }
+    .status-bar-wrapper { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .activity-grid { display: flex; gap: 2px; }
+    .activity-box { width: 10px; height: 10px; border-radius: 2px; background: #2a1515; }
+    .activity-box.active { background: #3dbbee; }
+    .status-label { font-size: 11px; font-weight: bold; white-space: nowrap; }
 
     .table-container { 
         background: #151921; border-radius: 8px; border: 1px solid #232935; 
-        width: 100%; max-height: calc(100vh - 250px); 
+        width: 100%; max-height: calc(100vh - 270px); 
         overflow: auto; -ms-overflow-style: none; scrollbar-width: none; position: relative;
     }
     .table-container::-webkit-scrollbar { display: none; }
@@ -70,11 +68,20 @@
     .avatar-img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; vertical-align: middle; border: 1px solid #333; }
     .col-content { min-width: 180px; max-width: 350px; line-height: 1.4; }
     .col-content p { margin: 4px 0; }
+    
+    /* FIX: Image & Iframe containment */
     .col-content img, .col-content iframe { 
-        max-width: 100%; max-height: 400px; object-fit: contain; 
-        height: auto; display: block; margin-top: 5px; border-radius: 4px; border: none;
+        max-width: 100%; 
+        max-height: 400px; 
+        object-fit: contain; 
+        height: auto; 
+        display: block; 
+        margin-top: 5px; 
+        border-radius: 4px;
+        border: none;
     }
     .col-content iframe { aspect-ratio: 16 / 9; width: 100%; }
+    
     .spoiler { background: #42464d; color: #42464d; padding: 0 2px; border-radius: 3px; cursor: pointer; transition: color 0.2s; }
     .spoiler:hover { background: #4f545c; }
     .spoiler.revealed { background: rgba(255,255,255,0.1); color: inherit; }
@@ -105,14 +112,12 @@
         </select>
       </label>
       <div class="stats-container">
-        <span>Comments: <strong id="currentCount">0</strong> / <strong id="totalCountDisplay">0</strong></span>
+        <span style="font-size: 13px;">Comments: <strong id="currentCount">0</strong> / <strong id="totalCountDisplay">0</strong></span>
         <div class="status-bar-wrapper">
-            <span class="status-label" style="color: #3dbbee">Active</span>
-            <div class="status-bar">
-                <div id="activeFill" class="status-fill-active" style="width: 0%"></div>
-            </div>
-            <span class="status-label" style="color: #ff5252">Deleted</span>
-            <span id="statusPercentage" style="margin-left: 5px; opacity: 0.6;">(0% Active)</span>
+            <span class="status-label" style="color: #3dbbee">Active: <span id="activeCountLabel">0</span></span>
+            <div class="activity-grid" id="activityGrid">
+                </div>
+            <span class="status-label" style="color: #ff5252">Deleted: <span id="deletedCountLabel">0</span></span>
         </div>
       </div>
     </div>
@@ -187,10 +192,19 @@
         if (total === 0) return;
         const deletedCount = rawData.filter(r => r.deleted === '1').length;
         const activeCount = total - deletedCount;
-        const activePercent = ((activeCount / total) * 100).toFixed(1);
         
-        document.getElementById('activeFill').style.width = activePercent + '%';
-        document.getElementById('statusPercentage').innerText = `(${activePercent}% Active)`;
+        document.getElementById('activeCountLabel').innerText = activeCount;
+        document.getElementById('deletedCountLabel').innerText = deletedCount;
+        
+        const activeRatio = Math.round((activeCount / total) * 20); // Scale to 20 boxes
+        const grid = document.getElementById('activityGrid');
+        grid.innerHTML = '';
+        
+        for (let i = 0; i < 20; i++) {
+            const box = document.createElement('div');
+            box.className = 'activity-box' + (i < activeRatio ? ' active' : '');
+            grid.appendChild(box);
+        }
     }
 
     function sortData() {
