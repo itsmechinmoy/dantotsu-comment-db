@@ -97,7 +97,7 @@
         vertical-align: top;
     }
 
-    /* YouTube Restored sizing */
+    /* YouTube iframe restored */
     .col-content iframe { 
         width: 100%; 
         max-width: 100%;
@@ -185,7 +185,7 @@
     
     const renderer = new marked.Renderer();
     
-    // Correctly handle images with all 3 parameters
+    // Correct image mapping
     renderer.image = function(href, title, text) {
         return `<img src="${href}" alt="${text || 'image'}" title="${title || ''}">`;
     };
@@ -202,23 +202,22 @@
         
         let html = marked.parse(processed, { renderer });
 
-        // Logic to wrap standalone image groups in a grid container WITHOUT breaking linked images
-        // This looks for <img> tags that are NOT inside an <a> tag
-        const placeholder = "LINKED_IMG_PLACEHOLDER";
-        let linkedImages = [];
+        // Safely wrap standalone images into containers without breaking <a> links
+        const placeholder = "LINKED_IMG_STASH";
+        let stash = [];
         
-        // Temporarily remove linked images from the string
+        // Remove linked images temporarily
         html = html.replace(/<a [^>]+>.*?<img [^>]+>.*?<\/a>/g, (match) => {
-            linkedImages.push(match);
+            stash.push(match);
             return placeholder;
         });
 
-        // Wrap the remaining standalone images
+        // Wrap standalone images
         html = html.replace(/(<img[^>]+>)+/g, match => `<div class="md-image-container">${match}</div>`);
 
-        // Put linked images back
-        linkedImages.forEach(link => {
-            html = html.replace(placeholder, link);
+        // Restore links
+        stash.forEach(item => {
+            html = html.replace(placeholder, item);
         });
 
         return html;
@@ -254,9 +253,8 @@
         const grid = document.getElementById('activityGrid');
         const countTextEl = document.getElementById('countText');
         if(!countTextEl) return;
-        const containerWidth = countTextEl.offsetWidth;
         
-        const numBoxes = Math.max(5, Math.floor((containerWidth - 65) / 10));
+        const numBoxes = Math.max(5, Math.floor((countTextEl.offsetWidth - 65) / 10));
         const activeRatio = Math.round((activeCount / total) * numBoxes);
         
         grid.innerHTML = '';
