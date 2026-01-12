@@ -36,23 +36,47 @@ class DantotsuDailySync:
         self.d_token = None
         
     def authenticate(self):
-        """Authenticate with Dantotsu API"""
+        """Authenticate with Dantotsu API with retry logic"""
         print("🔐 Authenticating with Dantotsu...")
-        try:
-            r = requests.post(
-                f"{API_ADDRESS}/authenticate",
-                headers={"appauth": APP_AUTH_KEY},
-                data={"token": AL_TOKEN},
-                timeout=10
-            )
-            if r.status_code == 200:
-                self.d_token = r.json().get("authToken")
-                print("✓ Authentication successful")
-                return True
-            else:
-                print(f"❌ Auth failed: {r.status_code}")
-        except Exception as e:
-            print(f"❌ Auth error: {e}")
+        max_retries = 5
+        base_wait = 5
+        
+        for attempt in range(max_retries):
+            try:
+                r = requests.post(
+                    f"{API_ADDRESS}/authenticate",
+                    headers={"appauth": APP_AUTH_KEY},
+                    data={"token": AL_TOKEN},
+                    timeout=30  # Increased from 10 to 30 seconds
+                )
+                if r.status_code == 200:
+                    self.d_token = r.json().get("authToken")
+                    print("✓ Authentication successful")
+                    sys.stdout.flush()
+                    return True
+                else:
+                    print(f"❌ Auth failed: {r.status_code}")
+                    if attempt < max_retries - 1:
+                        wait_time = base_wait * (2 ** attempt)
+                        print(f"   Retrying in {wait_time}s... (attempt {attempt + 1}/{max_retries})")
+                        sys.stdout.flush()
+                        time.sleep(wait_time)
+            except requests.exceptions.Timeout:
+                if attempt < max_retries - 1:
+                    wait_time = base_wait * (2 ** attempt)
+                    print(f"⚠️  Timeout! Retrying in {wait_time}s... (attempt {attempt + 1}/{max_retries})")
+                    sys.stdout.flush()
+                    time.sleep(wait_time)
+                else:
+                    print(f"❌ Auth timeout after {max_retries} attempts")
+            except Exception as e:
+                print(f"❌ Auth error: {e}")
+                if attempt < max_retries - 1:
+                    wait_time = base_wait * (2 ** attempt)
+                    print(f"   Retrying in {wait_time}s... (attempt {attempt + 1}/{max_retries})")
+                    sys.stdout.flush()
+                    time.sleep(wait_time)
+        
         return False
     
     def get_headers(self):
@@ -86,20 +110,22 @@ class DantotsuDailySync:
             'total_votes': int(c.get('total_votes', 0))
         }
     
-    def fetch_single_comment(self, comment_id, max_retries=2):
-        """Fetch a single comment by ID"""
+    def fetch_single_comment(self, comment_id, max_retries=3):
+        """Fetch a single comment by ID with retry logic"""
         headers = self.get_headers()
+        base_wait = 2
         
         for attempt in range(max_retries):
             try:
                 r = requests.get(
                     f"{API_ADDRESS}/comments/{comment_id}",
                     headers=headers,
-                    timeout=10
+                    timeout=30
                 )
                 
                 if r.status_code == 429:
                     print(f"⚠️  Rate limited, waiting 30s...")
+                    sys.stdout.flush()
                     time.sleep(30)
                     continue
                 
@@ -107,46 +133,77 @@ class DantotsuDailySync:
                     return r.json()
                 
                 return None
-                
+            
+            except requests.exceptions.Timeout:
+                if attempt < max_retries - 1:
+                    wait_time = base_wait * (2 ** attempt)
+                    print(f"⚠️  Timeout fetching comment {comment_id}, retry in {wait_time}s...")
+                    sys.stdout.flush()
+                    time.sleep(wait_time)
+                    
             except Exception as e:
                 if attempt == max_retries - 1:
                     print(f"❌ Error fetching comment {comment_id}: {e}")
+                    sys.stdout.flush()
                 return None
         
         return None
     
     def fetch_media_comments(self, media_id):
-        """Fetch all comments for a media"""
+        """Fetch all comments for a media with retry logic"""
         all_comments = []
         page = 1
         headers = self.get_headers()
+        max_page_retries = 3
+        base_wait = 2
         
         while True:
-            try:
-                r = requests.get(
-                    f"{API_ADDRESS}/comments/{media_id}/{page}?sort=newest",
-                    headers=headers,
-                    timeout=15
-                )
-                
-                if r.status_code == 429:
-                    print(f"⚠️  Rate limited on media {media_id}, waiting 30s...")
-                    time.sleep(30)
-                    continue
-                
-                if r.status_code != 200:
+            page_success = False
+            
+            for attempt in range(max_page_retries):
+                try:
+                    r = requests.get(
+                        f"{API_ADDRESS}/comments/{media_id}/{page}?sort=newest",
+                        headers=headers,
+                        timeout=30
+                    )
+                    
+                    if r.status_code == 429:
+                        print(f"⚠️  Rate limited on media {media_id}, waiting 30s...")
+                        sys.stdout.flush()
+                        time.sleep(30)
+                        continue
+                    
+                    if r.status_code != 200:
+                        return all_comments
+                    
+                    data = r.json().get('comments', [])
+                    if not data:
+                        return all_comments
+                    
+                    all_comments.extend(data)
+                    page += 1
+                    page_success = True
+                    time.sleep(0.15)  # Rate limiting
                     break
                 
-                data = r.json().get('comments', [])
-                if not data:
-                    break
-                
-                all_comments.extend(data)
-                page += 1
-                time.sleep(0.15)  # Rate limiting
-                
-            except Exception as e:
-                print(f"❌ Error fetching media {media_id}: {e}")
+                except requests.exceptions.Timeout:
+                    if attempt < max_page_retries - 1:
+                        wait_time = base_wait * (2 ** attempt)
+                        print(f"⚠️  Timeout on media {media_id} page {page}, retry in {wait_time}s...")
+                        sys.stdout.flush()
+                        time.sleep(wait_time)
+                    else:
+                        print(f"❌ Failed to fetch media {media_id} page {page} after {max_page_retries} attempts")
+                        sys.stdout.flush()
+                        return all_comments
+                        
+                except Exception as e:
+                    print(f"❌ Error fetching media {media_id}: {e}")
+                    sys.stdout.flush()
+                    return all_comments
+            
+            if not page_success:
                 break
         
         return all_comments
@@ -228,7 +285,7 @@ class DantotsuDailySync:
         active_media = set()
         consecutive_404s = 0
         current_id = last_known_id + 1
-        max_consecutive_404s = 10  # Stop after 10 empty IDs
+        max_consecutive_404s = 50  # Stop after 50 empty IDs
         
         while consecutive_404s < max_consecutive_404s:
             comment = self.fetch_single_comment(current_id)
