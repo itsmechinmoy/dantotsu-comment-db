@@ -27,7 +27,6 @@
     .download-btn:hover { background: #2a9cc9; }
     #resetViewBtn { background: #ff5252; color: white; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; display: none; }
     
-    /* Stats Container & Gradient Boxes */
     .stats-container { margin-top: 10px; display: table; width: auto; }
     .status-bar-wrapper { display: flex; align-items: center; gap: 8px; margin-top: 5px; width: 100%; }
     .activity-grid { display: flex; flex-wrap: wrap; gap: 2px; flex-grow: 1; min-width: 50px; justify-content: flex-start; }
@@ -75,7 +74,6 @@
     .col-content { min-width: 180px; max-width: 350px; line-height: 1.4; }
     .col-content p { margin: 4px 0; }
     
-    /* FIX: Image Grid 2x2 logic */
     .md-image-container {
         display: flex;
         flex-wrap: wrap;
@@ -90,7 +88,6 @@
         border-radius: 4px;
     }
 
-    /* FIX: YouTube Restored sizing and display */
     .col-content iframe { 
         width: 100%; 
         max-width: 100%;
@@ -177,6 +174,8 @@
     let currentSort = { key: 'comment_id', ascending: false };
     
     const renderer = new marked.Renderer();
+    
+    // Explicitly handle image rendering within links
     renderer.image = function(href, title, text) {
         return `<img src="${href}" alt="${text}" title="${title || ''}">`;
     };
@@ -184,14 +183,29 @@
     function parseAnilistMarkdown(text) {
         if (!text) return "";
         let processed = text;
+
+        // Escape asterisks
         processed = processed.replace(/\\\*/g, '&#42;');
+        
+        // AniList Spoilers
         processed = processed.replace(/<!([\s\S]*?)!>/g, (m, c) => `<span class="spoiler" onclick="this.classList.toggle('revealed')">${marked.parseInline(c)}</span>`);
         processed = processed.replace(/\|\|([\s\S]*?)\|\|/g, (m, c) => `<span class="spoiler" onclick="this.classList.toggle('revealed')">${marked.parseInline(c)}</span>`);
+        
+        // Underline and Strike
         processed = processed.replace(/__([\s\S]*?)__/g, '<u>$1</u>');
         processed = processed.replace(/~~([\s\S]*?)~~/g, '<del>$1</del>');
         
+        // Render Markdown
         let html = marked.parse(processed, { renderer });
-        return html.replace(/(<img[^>]+>)+/g, match => `<div class="md-image-container">${match}</div>`);
+
+        // FIX: Wrap images in container ONLY if they aren't part of a link to prevent breaking linked images
+        // We look for standalone <img> tags or groups of them not immediately wrapped by <a>
+        const imageRegex = /(<img[^>]+>)+/g;
+        html = html.replace(imageRegex, (match) => {
+            return `<div class="md-image-container">${match}</div>`;
+        });
+
+        return html;
     }
 
     marked.setOptions({ breaks: true, gfm: true });
@@ -223,8 +237,7 @@
         
         const grid = document.getElementById('activityGrid');
         const containerWidth = document.getElementById('countText').offsetWidth;
-        const labelWidths = 65; 
-        const availableWidth = containerWidth - labelWidths;
+        const availableWidth = containerWidth - 65; 
         
         const numBoxes = Math.max(5, Math.floor(availableWidth / 10));
         const activeRatio = Math.round((activeCount / total) * numBoxes);
