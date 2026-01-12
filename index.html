@@ -27,37 +27,14 @@
     .download-btn:hover { background: #2a9cc9; }
     #resetViewBtn { background: #ff5252; color: white; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; display: none; }
     
-    /* Stats Container & Master Gradient Boxes */
+    /* Stats Container & Gradient Boxes */
     .stats-container { margin-top: 10px; display: table; width: auto; }
     .status-bar-wrapper { display: flex; align-items: center; gap: 8px; margin-top: 5px; width: 100%; }
+    .activity-grid { display: flex; flex-wrap: wrap; gap: 2px; flex-grow: 1; min-width: 50px; justify-content: flex-start; }
     
-    .activity-grid { 
-        display: flex; 
-        flex-wrap: wrap; 
-        gap: 2px; 
-        flex-grow: 1; 
-        min-width: 50px; 
-        justify-content: flex-start;
-        /* Master gradient background applied to the whole grid container */
-        background: linear-gradient(to right, #2ea44f 0%, #f2e01d 50%, #ff3333 100%);
-        padding: 0;
-        border-radius: 1px;
-    }
-    
-    .activity-box { 
-        width: 8px; 
-        height: 8px; 
-        flex-shrink: 0;
-        /* Default background for 'Deleted' boxes (shows darkened version of master gradient) */
-        background-color: rgba(11, 14, 20, 0.85); 
-        box-shadow: inset 0 0 0 10px rgba(11, 14, 20, 0.85); 
-    }
-    
-    /* 'Active' boxes are transparent to reveal the master gradient underneath */
-    .activity-box.active { 
-        background-color: transparent; 
-        box-shadow: none;
-    }
+    .activity-box { width: 8px; height: 8px; border-radius: 1px; flex-shrink: 0; }
+    .activity-box.active { background: linear-gradient(135deg, #2ea44f 0%, #1a5c2d 100%); }
+    .activity-box.deleted { background: linear-gradient(135deg, #ff3333 0%, #801a1a 100%); }
     
     .status-label { font-size: 11px; font-weight: 800; white-space: nowrap; }
     #activeCountLabel { color: #2ea44f; }
@@ -98,6 +75,7 @@
     .col-content { min-width: 180px; max-width: 350px; line-height: 1.4; }
     .col-content p { margin: 4px 0; }
     
+    /* FIX: Image Grid 2x2 logic */
     .md-image-container {
         display: flex;
         flex-wrap: wrap;
@@ -111,10 +89,17 @@
         max-height: 300px; 
         border-radius: 4px;
     }
+
+    /* FIX: YouTube Restored sizing and display */
     .col-content iframe { 
-        max-width: 100%; max-height: 200px; 
-        display: block; margin-top: 5px; 
-        border-radius: 4px; border: none; aspect-ratio: 16 / 9;
+        width: 100%; 
+        max-width: 100%;
+        height: auto;
+        aspect-ratio: 16 / 9;
+        display: block; 
+        margin-top: 10px; 
+        border-radius: 4px; 
+        border: none;
     }
     
     .spoiler { background: #42464d; color: #42464d; padding: 0 2px; border-radius: 3px; cursor: pointer; transition: color 0.2s; }
@@ -247,7 +232,7 @@
         grid.innerHTML = '';
         for (let i = 0; i < numBoxes; i++) {
             const box = document.createElement('div');
-            box.className = 'activity-box' + (i < activeRatio ? ' active' : '');
+            box.className = 'activity-box ' + (i < activeRatio ? 'active' : 'deleted');
             grid.appendChild(box);
         }
     }
