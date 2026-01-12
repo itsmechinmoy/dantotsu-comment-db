@@ -24,13 +24,14 @@ jobs:
         env:
           AL_TOKEN: ${{ secrets.AL_TOKEN }}
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
-          PYTHONUNBUFFERED: 1  # <-- ADD THIS LINE
-        run: python -u dantotsu_manager.py  # <-- ADD -u FLAG
+          PYTHONUNBUFFERED: 1
+        run: python -u dantotsu_manager.py
       
       - name: Commit and Push
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
+          git pull --rebase origin main
           git add dantotsu_global_db.csv
-          git commit -m "chore: daily database sync [skip ci]" || echo "No changes"
+          git diff --cached --quiet || git commit -m "chore: daily database sync"
           git push
