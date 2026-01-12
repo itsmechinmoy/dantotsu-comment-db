@@ -29,7 +29,7 @@
     
     /* Stats Container & Gradient Boxes */
     .stats-container { margin-top: 10px; display: table; width: auto; }
-    .status-bar-wrapper { display: flex; align-items: center; gap: 6px; margin-top: 5px; width: 100%; }
+    .status-bar-wrapper { display: flex; align-items: center; gap: 8px; margin-top: 5px; width: 100%; }
     .activity-grid { display: flex; flex-wrap: wrap; gap: 2px; flex-grow: 1; min-width: 50px; justify-content: flex-start; }
     
     .activity-box { width: 8px; height: 8px; border-radius: 1px; flex-shrink: 0; }
@@ -37,7 +37,7 @@
     .activity-box.active { background: linear-gradient(135deg, #2ea44f 0%, #1a5c2d 100%); }
     .activity-box.deleted { background: linear-gradient(135deg, #ff3333 0%, #801a1a 100%); }
     
-    .status-label { font-size: 10px; font-weight: bold; white-space: nowrap; }
+    .status-label { font-size: 11px; font-weight: 800; white-space: nowrap; }
     #activeCountLabel { color: #2ea44f; }
     #deletedCountLabel { color: #ff5252; }
 
@@ -76,7 +76,7 @@
     .col-content { min-width: 180px; max-width: 350px; line-height: 1.4; }
     .col-content p { margin: 4px 0; }
     
-    /* FIX: Image Grid 2x2 logic with container wrap */
+    /* FIX: Image Grid 2x2 logic with container wrap and Square Enforcement */
     .md-image-container {
         display: flex;
         flex-wrap: wrap;
@@ -84,9 +84,10 @@
         margin-top: 5px;
     }
     .col-content img { 
-        max-width: calc(50% - 4px); 
+        width: calc(50% - 4px); /* Enforce width for grid */
+        aspect-ratio: 1 / 1;    /* Force Square Box */
+        object-fit: cover;      /* Ensure image fills square without stretching */
         max-height: 300px; 
-        object-fit: contain; 
         border-radius: 4px;
     }
     .col-content iframe { 
@@ -169,7 +170,6 @@
     let csvString = "";
     let currentSort = { key: 'comment_id', ascending: false };
     
-    // Custom renderer to wrap consecutive images in a flex container
     const renderer = new marked.Renderer();
     renderer.image = function(href, title, text) {
         return `<img src="${href}" alt="${text}" title="${title || ''}">`;
@@ -185,7 +185,6 @@
         processed = processed.replace(/~~([\s\S]*?)~~/g, '<del>$1</del>');
         
         let html = marked.parse(processed, { renderer });
-        // After parsing, wrap groups of images into a grid container
         return html.replace(/(<img[^>]+>)+/g, match => `<div class="md-image-container">${match}</div>`);
     }
 
