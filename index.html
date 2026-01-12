@@ -27,26 +27,19 @@
     .download-btn:hover { background: #2a9cc9; }
     #resetViewBtn { background: #ff5252; color: white; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; display: none; }
     
-    /* Stats Container with Gradient Numbers */
+    /* Stats Container & Gradient Boxes */
     .stats-container { margin-top: 10px; display: table; width: auto; }
-    .status-bar-wrapper { display: flex; align-items: center; gap: 8px; margin-top: 5px; width: 100%; }
+    .status-bar-wrapper { display: flex; align-items: center; gap: 6px; margin-top: 5px; width: 100%; }
     .activity-grid { display: flex; flex-wrap: wrap; gap: 2px; flex-grow: 1; min-width: 50px; justify-content: flex-start; }
-    .activity-box { width: 8px; height: 8px; border-radius: 1px; background: #2a1515; flex-shrink: 0; }
-    .activity-box.active { background: #2ea44f; }
     
-    .status-label { font-size: 11px; font-weight: 800; white-space: nowrap; }
-    /* Gradient for Active Count */
-    #activeCountLabel {
-        background: linear-gradient(to right, #2ea44f, #7ee787);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    /* Gradient for Deleted Count - More Vivid Red */
-    #deletedCountLabel {
-        background: linear-gradient(to right, #ff3333, #ff8080);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
+    .activity-box { width: 8px; height: 8px; border-radius: 1px; flex-shrink: 0; }
+    /* Box Gradients */
+    .activity-box.active { background: linear-gradient(135deg, #2ea44f 0%, #1a5c2d 100%); }
+    .activity-box.deleted { background: linear-gradient(135deg, #ff3333 0%, #801a1a 100%); }
+    
+    .status-label { font-size: 10px; font-weight: bold; white-space: nowrap; }
+    #activeCountLabel { color: #2ea44f; }
+    #deletedCountLabel { color: #ff5252; }
 
     .table-container { 
         background: #151921; border-radius: 8px; border: 1px solid #232935; 
@@ -79,17 +72,21 @@
     .target-highlight { background: #3dbbee44 !important; transition: background 2s; }
     tr:hover { background: #1c222d; }
     .avatar-img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; vertical-align: middle; border: 1px solid #333; }
+    
     .col-content { min-width: 180px; max-width: 350px; line-height: 1.4; }
     .col-content p { margin: 4px 0; }
     
-    /* FIX: Image Grid 2x2 Logic */
+    /* FIX: Image Grid 2x2 logic with container wrap */
+    .md-image-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 5px;
+    }
     .col-content img { 
-        max-width: calc(50% - 6px); /* Forces 2 per line */
-        max-height: 250px; 
-        object-fit: cover; 
-        display: inline-block; 
-        vertical-align: top;
-        margin: 2px; 
+        max-width: calc(50% - 4px); 
+        max-height: 300px; 
+        object-fit: contain; 
         border-radius: 4px;
     }
     .col-content iframe { 
@@ -127,7 +124,7 @@
           <option value="all">ALL (Slow)</option>
         </select>
       </label>
-      <div class="stats-container">
+      <div class="stats-container" id="statsAnchor">
         <span id="countText" style="font-size: 13px;">Comments: <strong id="currentCount">0</strong> / <strong id="totalCountDisplay">0</strong></span>
         <div class="status-bar-wrapper">
             <span class="status-label" id="activeCountLabel">0</span>
@@ -172,6 +169,12 @@
     let csvString = "";
     let currentSort = { key: 'comment_id', ascending: false };
     
+    // Custom renderer to wrap consecutive images in a flex container
+    const renderer = new marked.Renderer();
+    renderer.image = function(href, title, text) {
+        return `<img src="${href}" alt="${text}" title="${title || ''}">`;
+    };
+
     function parseAnilistMarkdown(text) {
         if (!text) return "";
         let processed = text;
@@ -180,11 +183,13 @@
         processed = processed.replace(/\|\|([\s\S]*?)\|\|/g, (m, c) => `<span class="spoiler" onclick="this.classList.toggle('revealed')">${marked.parseInline(c)}</span>`);
         processed = processed.replace(/__([\s\S]*?)__/g, '<u>$1</u>');
         processed = processed.replace(/~~([\s\S]*?)~~/g, '<del>$1</del>');
-        return marked.parse(processed);
+        
+        let html = marked.parse(processed, { renderer });
+        // After parsing, wrap groups of images into a grid container
+        return html.replace(/(<img[^>]+>)+/g, match => `<div class="md-image-container">${match}</div>`);
     }
 
-    const renderer = new marked.Renderer();
-    marked.setOptions({ renderer, breaks: true, gfm: true });
+    marked.setOptions({ breaks: true, gfm: true });
 
     async function init() {
       try {
@@ -213,7 +218,7 @@
         
         const grid = document.getElementById('activityGrid');
         const containerWidth = document.getElementById('countText').offsetWidth;
-        const labelWidths = 70; 
+        const labelWidths = 65; 
         const availableWidth = containerWidth - labelWidths;
         
         const numBoxes = Math.max(5, Math.floor(availableWidth / 10));
@@ -222,7 +227,7 @@
         grid.innerHTML = '';
         for (let i = 0; i < numBoxes; i++) {
             const box = document.createElement('div');
-            box.className = 'activity-box' + (i < activeRatio ? ' active' : '');
+            box.className = 'activity-box ' + (i < activeRatio ? 'active' : 'deleted');
             grid.appendChild(box);
         }
     }
