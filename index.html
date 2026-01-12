@@ -27,13 +27,26 @@
     .download-btn:hover { background: #2a9cc9; }
     #resetViewBtn { background: #ff5252; color: white; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; display: none; }
     
-    /* GitHub Style Dynamic Activity Grid - Refined */
+    /* Stats Container with Gradient Numbers */
     .stats-container { margin-top: 10px; display: table; width: auto; }
-    .status-bar-wrapper { display: flex; align-items: center; gap: 6px; margin-top: 5px; width: 100%; }
+    .status-bar-wrapper { display: flex; align-items: center; gap: 8px; margin-top: 5px; width: 100%; }
     .activity-grid { display: flex; flex-wrap: wrap; gap: 2px; flex-grow: 1; min-width: 50px; justify-content: flex-start; }
     .activity-box { width: 8px; height: 8px; border-radius: 1px; background: #2a1515; flex-shrink: 0; }
-    .activity-box.active { background: #2ea44f; } /* Green Active Color */
-    .status-label { font-size: 10px; font-weight: bold; white-space: nowrap; opacity: 0.9; }
+    .activity-box.active { background: #2ea44f; }
+    
+    .status-label { font-size: 11px; font-weight: 800; white-space: nowrap; }
+    /* Gradient for Active Count */
+    #activeCountLabel {
+        background: linear-gradient(to right, #2ea44f, #7ee787);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    /* Gradient for Deleted Count - More Vivid Red */
+    #deletedCountLabel {
+        background: linear-gradient(to right, #ff3333, #ff8080);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
 
     .table-container { 
         background: #151921; border-radius: 8px; border: 1px solid #232935; 
@@ -69,13 +82,13 @@
     .col-content { min-width: 180px; max-width: 350px; line-height: 1.4; }
     .col-content p { margin: 4px 0; }
     
-    /* FIX: Image Grid and Vertical Alignment */
+    /* FIX: Image Grid 2x2 Logic */
     .col-content img { 
-        max-width: 48%; 
-        max-height: 300px; 
-        object-fit: contain; 
+        max-width: calc(50% - 6px); /* Forces 2 per line */
+        max-height: 250px; 
+        object-fit: cover; 
         display: inline-block; 
-        vertical-align: top; /* Ensures text stays above and images align top-to-top */
+        vertical-align: top;
         margin: 2px; 
         border-radius: 4px;
     }
@@ -114,12 +127,12 @@
           <option value="all">ALL (Slow)</option>
         </select>
       </label>
-      <div class="stats-container" id="statsAnchor">
+      <div class="stats-container">
         <span id="countText" style="font-size: 13px;">Comments: <strong id="currentCount">0</strong> / <strong id="totalCountDisplay">0</strong></span>
         <div class="status-bar-wrapper">
-            <span class="status-label" id="activeCountLabel" style="color: #2ea44f">0</span>
+            <span class="status-label" id="activeCountLabel">0</span>
             <div class="activity-grid" id="activityGrid"></div>
-            <span class="status-label" id="deletedCountLabel" style="color: #ff5252">0</span>
+            <span class="status-label" id="deletedCountLabel">0</span>
         </div>
       </div>
     </div>
@@ -200,7 +213,7 @@
         
         const grid = document.getElementById('activityGrid');
         const containerWidth = document.getElementById('countText').offsetWidth;
-        const labelWidths = 65; 
+        const labelWidths = 70; 
         const availableWidth = containerWidth - labelWidths;
         
         const numBoxes = Math.max(5, Math.floor(availableWidth / 10));
