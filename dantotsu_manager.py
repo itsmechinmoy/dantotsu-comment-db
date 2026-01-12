@@ -228,7 +228,7 @@ class DantotsuDailySync:
         active_media = set()
         consecutive_404s = 0
         current_id = last_known_id + 1
-        max_consecutive_404s = 50  # Stop after 50 empty IDs
+        max_consecutive_404s = 10  # Stop after 10 empty IDs
         
         while consecutive_404s < max_consecutive_404s:
             comment = self.fetch_single_comment(current_id)
