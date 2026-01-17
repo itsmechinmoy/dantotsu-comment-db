@@ -80,7 +80,6 @@
         gap: 4px;
         margin-top: 5px;
     }
-    /* Square boxes for grid images */
     .md-image-container img { 
         width: calc(50% - 4px); 
         aspect-ratio: 1 / 1;    
@@ -88,7 +87,6 @@
         max-height: 300px; 
         border-radius: 4px;
     }
-    /* Standard image handling for standalone/linked images */
     .col-content img {
         max-width: 100%;
         height: auto;
@@ -96,7 +94,6 @@
         vertical-align: top;
     }
 
-    /* YouTube iframe sizing */
     .col-content iframe { 
         width: 100%; 
         max-width: 100%;
@@ -184,9 +181,7 @@
     
     const renderer = new marked.Renderer();
     
-    // Correctly handle marked.js image renderer (handles both old and new object-based versions)
     renderer.image = function(src, title, alt) {
-        // In newer marked versions, args are passed as an object
         const href = typeof src === 'object' ? src.href : src;
         const text = typeof src === 'object' ? src.text : alt;
         const head = typeof src === 'object' ? src.title : title;
@@ -205,8 +200,6 @@
         
         let html = marked.parse(processed, { renderer });
 
-        // Safely wrap standalone image groups in a grid container WITHOUT breaking linked images
-        // We use a temporary token to hide images inside <a> tags
         const tokens = [];
         html = html.replace(/<a [^>]+>.*?<img [^>]+>.*?<\/a>/g, (match) => {
             const token = `###LINKED_IMG_${tokens.length}###`;
@@ -214,10 +207,8 @@
             return token;
         });
 
-        // Wrap standalone images (images that were not inside links)
         html = html.replace(/(<img[^>]+>)+/g, match => `<div class="md-image-container">${match}</div>`);
 
-        // Put linked images back
         tokens.forEach(({ token, match }) => {
             html = html.replace(token, match);
         });
@@ -312,6 +303,23 @@
         } else alert("Comment ID " + targetId + " not found in database.");
     }
 
+    function viewThread(parentId) {
+        const parentComment = rawData.find(c => c.comment_id === parentId);
+        const replies = rawData.filter(c => c.parent_comment_id === parentId);
+        
+        let threadData = [];
+        if (parentComment) threadData.push(parentComment);
+        threadData = threadData.concat(replies);
+
+        if (threadData.length > 0) {
+            renderTable(threadData, threadData.length);
+            document.getElementById('resetViewBtn').style.display = 'inline-block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+            alert("Thread not found.");
+        }
+    }
+
     function resetView() { document.getElementById('resetViewBtn').style.display = 'none'; updateView(); }
     function formatBool(val) { return (val === '1' || val === 1 || val === "true") ? '✅' : '❌'; }
 
@@ -345,7 +353,9 @@
             <td align="center"><img src="${row.profile_picture_url}" class="avatar-img" onerror="this.src='https://files.catbox.moe/1f7ay7.png'"></td>
             <td align="center">${formatBool(row.is_mod)}</td>
             <td align="center">${formatBool(row.is_admin)}</td>
-            <td align="center">${row.reply_count}</td>
+            <td align="center">
+                ${row.reply_count > 0 ? `<span class="link" onclick="viewThread('${row.comment_id}')">${row.reply_count}</span>` : '0'}
+            </td>
             <td align="center">${row.total_votes}</td>
           </tr>`;
       }).join('');
