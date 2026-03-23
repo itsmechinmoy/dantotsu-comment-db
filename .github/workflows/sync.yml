@@ -25,6 +25,7 @@ jobs:
           AL_TOKEN: ${{ secrets.AL_TOKEN }}
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
           PYTHONUNBUFFERED: 1
+          MANUAL_SYNC: ${{ github.event_name == 'workflow_dispatch' && 'true' || 'false' }}
         run: python -u dantotsu_manager.py
       
       - name: Commit and Push
