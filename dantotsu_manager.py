@@ -209,66 +209,70 @@ class DantotsuDailySync:
         return all_comments
     
     def check_discord_deletions(self, existing_comment_ids):
-        """Check Discord server-wide for mod deletions"""
+        """Check Discord for mod deletions. If MANUAL_SYNC env is set, fetch all pages."""
         if not DISCORD_TOKEN:
             print("⚠️  No Discord token, skipping deletion check")
             return set()
         
-        print("🔨 Checking Discord for mod deletions (server-wide)...")
+        is_manual = os.environ.get("MANUAL_SYNC") == "true"
+        print(f"🔨 Checking Discord for mod deletions ({'FULL SCAN' if is_manual else 'LAST 24H'})...")
         sys.stdout.flush()
+        
         deleted_ids = set()
+        search_url = f"https://discord.com/api/v9/guilds/{GUILD_ID}/messages/search"
+        offset = 0
         
         try:
-            # Search server-wide for bot's deletion messages
-            # Using Discord's search API to find messages from the bot
-            
-            # Search query: messages from bot containing "has been deleted"
-            search_url = f"https://discord.com/api/v9/guilds/{GUILD_ID}/messages/search"
-            params = {
-                "author_id": MOD_BOT_ID,
-                "content": "has been deleted",
-                "include_nsfw": "true"
-            }
-            
-            r = requests.get(
-                search_url,
-                headers={"Authorization": DISCORD_TOKEN},
-                params=params,
-                timeout=15
-            )
-            
-            if r.status_code == 200:
-                data = r.json()
-                messages = data.get('messages', [])
+            while True:
+                params = {
+                    "author_id": MOD_BOT_ID,
+                    "content": "has been deleted",
+                    "include_nsfw": "true",
+                    "offset": offset
+                }
                 
-                # Discord returns messages in nested arrays
-                for msg_group in messages:
-                    if isinstance(msg_group, list):
-                        for msg in msg_group:
+                r = requests.get(
+                    search_url,
+                    headers={"Authorization": DISCORD_TOKEN},
+                    params=params,
+                    timeout=15
+                )
+                
+                if r.status_code == 200:
+                    data = r.json()
+                    messages = data.get('messages', [])
+                    
+                    if not messages:
+                        break
+
+                    for msg_group in messages:
+                        # Discord search returns messages in nested lists or dicts
+                        msgs_to_process = msg_group if isinstance(msg_group, list) else [msg_group]
+                        for msg in msgs_to_process:
                             content = msg.get('content', '')
-                            # Extract comment ID from "Comment with id 1148 has been deleted"
                             match = re.search(r'Comment with id (\d+) has been deleted', content, re.IGNORECASE)
                             if match:
                                 cid = int(match.group(1))
                                 if cid in existing_comment_ids:
                                     deleted_ids.add(cid)
-                                    print(f"  Found deletion: Comment {cid}")
-                                    sys.stdout.flush()
-                    elif isinstance(msg_group, dict):
-                        content = msg_group.get('content', '')
-                        match = re.search(r'Comment with id (\d+) has been deleted', content, re.IGNORECASE)
-                        if match:
-                            cid = int(match.group(1))
-                            if cid in existing_comment_ids:
-                                deleted_ids.add(cid)
-                                print(f"  Found deletion: Comment {cid}")
-                                sys.stdout.flush()
-                
-                print(f"✓ Scanned deletion messages, found {len(deleted_ids)} deletions")
-                sys.stdout.flush()
-            else:
-                print(f"⚠️  Discord search returned {r.status_code}: {r.text[:200]}")
-                sys.stdout.flush()
+
+                    # If not a manual sync, we only take the first page (last ~25 deletions)
+                    if not is_manual:
+                        break
+                    
+                    # If manual, move to next page
+                    offset += 25
+                    # Safety cap to avoid infinite loops/extreme API usage (40 pages = 1000 messages)
+                    if offset >= 1000:
+                        break
+                    
+                    time.sleep(1) # Small delay to be nice to Discord API
+                else:
+                    print(f"⚠️  Discord search returned {r.status_code}")
+                    break
+
+            print(f"✓ Scanned deletion messages, found {len(deleted_ids)} deletions")
+            sys.stdout.flush()
                 
         except Exception as e:
             print(f"⚠️  Discord check failed: {e}")
