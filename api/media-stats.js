@@ -64,7 +64,7 @@ export default async function handler(req, res) {
       }
     }
     
-    const result = Array.from(stats.values()).map(record => ({
+    const allResults = Array.from(stats.values()).map(record => ({
       media_id: record.media_id,
       total_comments: record.total_comments,
       reply_count: record.reply_count,
@@ -72,12 +72,38 @@ export default async function handler(req, res) {
       unique_users: record.unique_users.size
     }));
     
-    result.sort((a, b) => b.total_comments - a.total_comments);
+    const { id, ids } = req.query;
+    
+    if (id) {
+      const mediaData = allResults.find(m => m.media_id === id);
+      if (!mediaData) {
+        return res.status(404).json({ 
+          success: false, 
+          error: `Media ID ${id} not found` 
+        });
+      }
+      return res.status(200).json({ 
+        success: true, 
+        data: mediaData 
+      });
+    }
+    
+    if (ids) {
+      const requestedIds = ids.split(',').map(i => i.trim());
+      const filteredResults = allResults.filter(m => requestedIds.includes(m.media_id));
+      return res.status(200).json({ 
+        success: true, 
+        count: filteredResults.length,
+        data: filteredResults 
+      });
+    }
+    
+    allResults.sort((a, b) => b.total_comments - a.total_comments);
     
     res.status(200).json({ 
       success: true, 
-      count: result.length,
-      data: result.slice(0, 100)
+      count: allResults.length,
+      data: allResults
     });
     
   } catch (error) {
