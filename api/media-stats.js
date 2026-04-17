@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   
   try {
-    const csvPath = path.join(process.cwd(), 'public', 'dantotsu_global_db.csv');
+    const csvPath = path.join(process.cwd(), 'dantotsu_global_db.csv');
     
     if (!fs.existsSync(csvPath)) {
       return res.status(404).json({ 
