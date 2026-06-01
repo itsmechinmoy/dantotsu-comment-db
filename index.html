@@ -207,7 +207,7 @@
             return token;
         });
 
-        html = html.replace(/(<img[^>]+>)+/g, match => `<div class="md-image-container">${match}</div>`);
+        html = html.replace(/(<img[^>]+>){2,}/g, match => `<div class="md-image-container">${match}</div>`);
 
         tokens.forEach(({ token, match }) => {
             html = html.replace(token, match);
