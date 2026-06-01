@@ -230,6 +230,7 @@
         processed = processed.replace(/__([\s\S]*?)__/g, '<u>$1</u>');
         processed = processed.replace(/~~([\s\S]*?)~~/g, '<del>$1</del>');
 
+        processed = processed.replace(/\\n/g, '\n');
         processed = parseMarkdownTables(processed);
 
         let html = marked.parse(processed, { renderer });
