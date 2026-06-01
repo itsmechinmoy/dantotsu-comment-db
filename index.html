@@ -73,7 +73,12 @@
     
     .col-content { min-width: 180px; max-width: 350px; line-height: 1.4; }
     .col-content p { margin: 4px 0; }
-    
+
+    .col-content table { border-collapse: collapse; width: 100%; margin: 6px 0; }
+    .col-content table th { background: #1c222d; border: 1px solid #232935; padding: 5px 8px; text-align: center; position: static; white-space: normal; font-size: 11px; }
+    .col-content table td { border: 1px solid #232935; padding: 5px 8px; text-align: center; }
+    .col-content table img { max-width: 100%; height: auto; border-radius: 4px; display: block; margin: 0 auto; }
+
     .md-image-container {
         display: flex;
         flex-wrap: wrap;
@@ -188,6 +193,33 @@
         return `<img src="${href}" alt="${text || 'image'}" title="${head || ''}">`;
     };
 
+    function parseMarkdownTables(text) {
+        const lines = text.split('\n');
+        const result = [];
+        let i = 0;
+        while (i < lines.length) {
+            const line = lines[i].trim();
+            const nextLine = i + 1 < lines.length ? lines[i + 1].trim() : '';
+            if (line.startsWith('|') && line.endsWith('|') && nextLine.startsWith('|') && /^\|[\s|:-]+\|$/.test(nextLine)) {
+                const headerCells = line.replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+                i += 2;
+                const bodyRows = [];
+                while (i < lines.length && lines[i].trim().startsWith('|') && lines[i].trim().endsWith('|')) {
+                    const cells = lines[i].trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+                    bodyRows.push(cells);
+                    i++;
+                }
+                const headHtml = headerCells.map(c => `<th>${c}</th>`).join('');
+                const bodyHtml = bodyRows.map(row => `<tr>${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('');
+                result.push(`<table><thead><tr>${headHtml}</tr></thead><tbody>${bodyHtml}</tbody></table>`);
+            } else {
+                result.push(lines[i]);
+                i++;
+            }
+        }
+        return result.join('\n');
+    }
+
     function parseAnilistMarkdown(text) {
         if (!text) return "";
         let processed = text;
@@ -197,7 +229,9 @@
         processed = processed.replace(/\|\|([\s\S]*?)\|\|/g, (m, c) => `<span class="spoiler" onclick="this.classList.toggle('revealed')">${marked.parseInline(c)}</span>`);
         processed = processed.replace(/__([\s\S]*?)__/g, '<u>$1</u>');
         processed = processed.replace(/~~([\s\S]*?)~~/g, '<del>$1</del>');
-        
+
+        processed = parseMarkdownTables(processed);
+
         let html = marked.parse(processed, { renderer });
 
         const tokens = [];
