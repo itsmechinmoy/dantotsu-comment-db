@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en-US" dir="ltr" class="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Introduction | Dantotsu Comment DB Docs</title>
+  <meta name="description" content="Developer documentation for the Dantotsu Comment Database API.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --vp-c-bg: #1b1b1f;
+      --vp-c-bg-alt: #161618;
+      --vp-c-bg-elv: #202127;
+      --vp-c-border: #2e2e32;
+      --vp-c-divider: #2e2e32;
+      --vp-c-gutter: #000000;
+      
+      --vp-c-text-1: rgba(255, 255, 255, 0.87);
+      --vp-c-text-2: rgba(235, 235, 245, 0.6);
+      --vp-c-text-3: rgba(235, 235, 245, 0.38);
+
+      --vp-c-brand: #3b82f6;
+      --vp-c-brand-hover: #60a5fa;
+      --vp-c-brand-soft: rgba(59, 130, 246, 0.14);
+
+      --vp-c-warning-text: #eab308;
+      --vp-c-warning-bg: rgba(234, 179, 8, 0.08);
+      --vp-c-warning-border: rgba(234, 179, 8, 0.25);
+
+      --vp-c-danger-text: #ef4444;
+      --vp-c-danger-bg: rgba(239, 68, 68, 0.08);
+      --vp-c-danger-border: rgba(239, 68, 68, 0.25);
+
+      --vp-font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+      --vp-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      background-color: var(--vp-c-bg);
+      color: var(--vp-c-text-1);
+      font-family: var(--vp-font-sans);
+      font-size: 16px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      scroll-behavior: smooth;
+    }
+
+    /* Top Nav */
+    .VPNav {
+      position: sticky;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 64px;
+      background-color: rgba(27, 27, 31, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--vp-c-border);
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      padding: 0 32px;
+    }
+
+    .nav-container {
+      width: 100%;
+      max-width: 1440px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .nav-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--vp-c-text-1);
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: -0.01em;
+    }
+
+    .logo-badge {
+      width: 24px;
+      height: 24px;
+      background-color: var(--vp-c-brand);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .nav-search {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background-color: var(--vp-c-bg-alt);
+      border: 1px solid var(--vp-c-border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      color: var(--vp-c-text-2);
+      font-size: 13px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .nav-search kbd {
+      background: var(--vp-c-bg-elv);
+      border: 1px solid var(--vp-c-border);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 11px;
+      color: var(--vp-c-text-3);
+      font-family: var(--vp-font-mono);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      list-style: none;
+    }
+
+    .nav-link {
+      color: var(--vp-c-text-2);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: var(--vp-c-brand);
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .icon-link {
+      color: var(--vp-c-text-2);
+      display: flex;
+      align-items: center;
+      transition: color 0.2s;
+    }
+
+    .icon-link:hover {
+      color: var(--vp-c-text-1);
+    }
+
+    .theme-switch {
+      background: var(--vp-c-bg-alt);
+      border: 1px solid var(--vp-c-border);
+      border-radius: 14px;
+      width: 40px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      padding: 2px;
+      cursor: pointer;
+    }
+
+    .theme-switch-knob {
+      width: 16px;
+      height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      margin-left: auto;
+    }
+
+    /* Layout Columns */
+    .layout-wrapper {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: flex;
+    }
+
+    /* Left Sidebar */
+    .VPSidebar {
+      width: 272px;
+      flex-shrink: 0;
+      height: calc(100vh - 64px);
+      position: sticky;
+      top: 64px;
+      overflow-y: auto;
+      padding: 28px 16px 48px 32px;
+      border-right: 1px solid var(--vp-c-border);
+    }
+
+    .sidebar-group {
+      margin-bottom: 24px;
+    }
+
+    .sidebar-group-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--vp-c-text-1);
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    .sidebar-items {
+      list-style: none;
+    }
+
+    .sidebar-link {
+      display: block;
+      padding: 6px 0;
+      color: var(--vp-c-text-2);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.2s;
+      line-height: 20px;
+    }
+
+    .sidebar-link:hover {
+      color: var(--vp-c-text-1);
+    }
+
+    .sidebar-link.active {
+      color: var(--vp-c-brand);
+      font-weight: 500;
+    }
+
+    /* Center Content */
+    .content-area {
+      flex: 1;
+      min-width: 0;
+      padding: 48px 48px 96px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .vp-doc {
+      width: 100%;
+      max-width: 720px;
+    }
+
+    /* Right TOC Outline */
+    .aside-container {
+      width: 240px;
+      flex-shrink: 0;
+      height: calc(100vh - 64px);
+      position: sticky;
+      top: 64px;
+      padding: 48px 32px 48px 16px;
+    }
+
+    .outline-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--vp-c-text-1);
+      margin-bottom: 12px;
+      letter-spacing: -0.01em;
+    }
+
+    .outline-list {
+      list-style: none;
+      border-left: 1px solid var(--vp-c-border);
+      padding-left: 12px;
+    }
+
+    .outline-link {
+      display: block;
+      color: var(--vp-c-text-2);
+      text-decoration: none;
+      font-size: 13px;
+      line-height: 26px;
+      transition: color 0.2s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .outline-link:hover, .outline-link.active {
+      color: var(--vp-c-brand);
+    }
+
+    /* Markdown Document Styles (Identical to VitePress) */
+    h1 {
+      font-size: 32px;
+      line-height: 40px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 24px;
+      color: var(--vp-c-text-1);
+    }
+
+    h2 {
+      font-size: 24px;
+      line-height: 32px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-top: 48px;
+      margin-bottom: 16px;
+      padding-top: 24px;
+      border-top: 1px solid var(--vp-c-border);
+      color: var(--vp-c-text-1);
+      display: flex;
+      align-items: center;
+    }
+
+    h3 {
+      font-size: 18px;
+      line-height: 26px;
+      font-weight: 600;
+      margin-top: 32px;
+      margin-bottom: 12px;
+      color: var(--vp-c-text-1);
+    }
+
+    p {
+      margin-bottom: 16px;
+      line-height: 28px;
+      color: var(--vp-c-text-1);
+    }
+
+    a {
+      color: var(--vp-c-brand);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    a:hover {
+      color: var(--vp-c-brand-hover);
+      text-decoration: underline;
+    }
+
+    .header-anchor {
+      opacity: 0;
+      margin-left: 8px;
+      color: var(--vp-c-brand);
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+
+    h1:hover .header-anchor, h2:hover .header-anchor, h3:hover .header-anchor {
+      opacity: 1;
+    }
+
+    /* VitePress Custom Blocks (Callouts) */
+    .custom-block {
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 24px 0;
+    }
+
+    .custom-block.warning {
+      background-color: var(--vp-c-warning-bg);
+      border: 1px solid var(--vp-c-warning-border);
+    }
+
+    .custom-block.danger {
+      background-color: var(--vp-c-danger-bg);
+      border: 1px solid var(--vp-c-danger-border);
+    }
+
+    .custom-block-title {
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 8px;
+      line-height: 20px;
+    }
+
+    .custom-block.warning .custom-block-title {
+      color: var(--vp-c-warning-text);
+    }
+
+    .custom-block.danger .custom-block-title {
+      color: var(--vp-c-danger-text);
+    }
+
+    .custom-block p {
+      font-size: 14px;
+      line-height: 24px;
+      margin-bottom: 0;
+    }
+
+    /* Lists */
+    ol, ul {
+      padding-left: 24px;
+      margin-bottom: 20px;
+    }
+
+    li {
+      margin-bottom: 8px;
+      line-height: 26px;
+      color: var(--vp-c-text-1);
+    }
+
+    /* Inline Code */
+    code {
+      font-family: var(--vp-font-mono);
+      font-size: 0.875em;
+      color: var(--vp-c-text-1);
+      background-color: rgba(142, 150, 170, 0.14);
+      padding: 3px 6px;
+      border-radius: 4px;
+    }
+
+    /* Code Blocks */
+    .code-block-wrapper {
+      position: relative;
+      margin: 20px 0;
+      border-radius: 8px;
+      background-color: var(--vp-c-bg-alt);
+      border: 1px solid var(--vp-c-border);
+      overflow: hidden;
+    }
+
+    .code-lang-label {
+      position: absolute;
+      top: 10px;
+      right: 48px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--vp-c-text-3);
+      font-family: var(--vp-font-mono);
+      user-select: none;
+    }
+
+    .code-copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      background: transparent;
+      border: none;
+      color: var(--vp-c-text-2);
+      padding: 4px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s, background-color 0.15s;
+    }
+
+    .code-copy-btn:hover {
+      color: var(--vp-c-text-1);
+      background-color: var(--vp-c-bg-elv);
+    }
+
+    pre {
+      padding: 20px 24px;
+      overflow-x: auto;
+      font-family: var(--vp-font-mono);
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: var(--vp-c-text-1);
+      margin: 0;
+    }
+
+    pre code {
+      background-color: transparent;
+      padding: 0;
+      font-size: inherit;
+      color: inherit;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 24px 0;
+      font-size: 14px;
+      border: 1px solid var(--vp-c-border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th {
+      background-color: var(--vp-c-bg-alt);
+      padding: 10px 16px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--vp-c-text-1);
+      border-bottom: 1px solid var(--vp-c-border);
+    }
+
+    td {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--vp-c-border);
+      color: var(--vp-c-text-2);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Footer Prev/Next */
+    .page-footer {
+      margin-top: 64px;
+      padding-top: 24px;
+      border-top: 1px solid var(--vp-c-border);
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .pager-link {
+      border: 1px solid var(--vp-c-border);
+      border-radius: 8px;
+      padding: 12px 18px;
+      text-align: right;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      transition: border-color 0.2s;
+    }
+
+    .pager-link:hover {
+      border-color: var(--vp-c-brand);
+      text-decoration: none;
+    }
+
+    .pager-desc {
+      font-size: 12px;
+      color: var(--vp-c-text-3);
+    }
+
+    .pager-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--vp-c-brand);
+    }
+
+    @media (max-width: 1100px) {
+      .aside-container {
+        display: none;
+      }
+    }
+
+    @media (max-width: 800px) {
+      .VPSidebar {
+        display: none;
+      }
+      .content-area {
+        padding: 32px 20px 64px;
+      }
+      .VPNav {
+        padding: 0 16px;
+      }
+      .nav-search {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="VPNav">
+    <div class="nav-container">
+      <div class="nav-left">
+        <a class="nav-title" href="/">
+          <div class="logo-badge">D</div>
+          <span>Dantotsu API Docs</span>
+        </a>
+        <div class="nav-search">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <span>Search</span>
+          <kbd>Ctrl K</kbd>
+        </div>
+      </div>
+      <div class="nav-right">
+        <ul class="nav-links">
+          <li><a class="nav-link active" href="#introduction">Guide</a></li>
+          <li><a class="nav-link" href="#endpoints">Reference</a></li>
+          <li><a class="nav-link" href="https://anilist.co" target="_blank" rel="noreferrer">AniList <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></li>
+          <li><a class="nav-link" href="https://github.com/itsmechinmoy/dantotsu" target="_blank" rel="noreferrer">Dantotsu <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></li>
+        </ul>
+        <div class="theme-switch" title="Appearance">
+          <div class="theme-switch-knob"></div>
+        </div>
+        <a class="icon-link" href="https://raw.githubusercontent.com/itsmechinmoy/Dantotsu/refs/heads/main/app/src/main/ic_launcher-playstore.png" target="_blank" rel="noreferrer" aria-label="GitHub">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout-wrapper">
+    <!-- Left Sidebar -->
+    <aside class="VPSidebar">
+      <div class="sidebar-group">
+        <div class="sidebar-group-title">Introduction</div>
+        <ul class="sidebar-items">
+          <li><a class="sidebar-link active" href="#introduction">What is Comment DB?</a></li>
+          <li><a class="sidebar-link" href="#commenting-rules">Commenting Rules</a></li>
+          <li><a class="sidebar-link" href="#universal-headers">Universal Headers</a></li>
+          <li><a class="sidebar-link" href="#authentication">Authentication</a></li>
+        </ul>
+      </div>
+      <div class="sidebar-group">
+        <div class="sidebar-group-title">API Reference</div>
+        <ul class="sidebar-items">
+          <li><a class="sidebar-link" href="#get-comments">Fetch Comments</a></li>
+          <li><a class="sidebar-link" href="#get-replies">Fetch Thread Replies</a></li>
+          <li><a class="sidebar-link" href="#post-comment">Post Comment or Reply</a></li>
+          <li><a class="sidebar-link" href="#vote-comment">Vote on Comment</a></li>
+          <li><a class="sidebar-link" href="#edit-delete">Edit & Delete</a></li>
+          <li><a class="sidebar-link" href="#report-comment">Report Violation</a></li>
+          <li><a class="sidebar-link" href="#notifications">Notifications</a></li>
+        </ul>
+      </div>
+      <div class="sidebar-group">
+        <div class="sidebar-group-title">Implementation</div>
+        <ul class="sidebar-items">
+          <li><a class="sidebar-link" href="#client-implementation">One-Page Client Library</a></li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Center Content -->
+    <div class="content-area">
+      <main class="vp-doc">
+        
+        <h1 id="introduction">Introduction <a class="header-anchor" href="#introduction" aria-label="Permalink to &quot;Introduction&quot;">#</a></h1>
+        <p>
+          Dantotsu Comment DB is a unified, shared community discussion service built for anime and manga applications. Comments and reply threads are indexed directly by <strong>AniList Media IDs</strong>, allowing users across different clients to interact, post episode or chapter discussions, vote, and receive reply notifications.
+        </p>
+
+        <h2 id="accuracy-above-all">Platform Architecture <a class="header-anchor" href="#accuracy-above-all" aria-label="Permalink to &quot;Platform Architecture&quot;">#</a></h2>
+        <p>
+          The service operates over standard HTTP with form-encoded mutation payloads and JSON responses. User authentication is verified cryptographically using legitimate AniList OAuth credentials, ensuring user identity consistency and spam resistance across the ecosystem.
+        </p>
+
+        <h2 id="commenting-rules">Commenting Rules <a class="header-anchor" href="#commenting-rules" aria-label="Permalink to &quot;Commenting Rules&quot;">#</a></h2>
+        <p>
+          Any third-party client integrating Dantotsu Comment DB must make users aware of and enforce the 10 community rules before allowing submissions. Moderation applies universally across the entire database.
+        </p>
+
+        <div class="danger custom-block">
+          <p class="custom-block-title">Rules Enforcement Policy</p>
+          <p>
+            Violating any of the rules below will lead to immediate comment removal. Serious or repeat infractions will result in a permanent ban of the user ID and connected AniList credentials.
+          </p>
+        </div>
+
+        <ol>
+          <li><strong>No racism, discrimination, or hate speech</strong> — Zero tolerance for discrimination based on race, ethnicity, religion, gender, or orientation.</li>
+          <li><strong>No spamming or self-promotion</strong> — Prohibited duplicate messages, automated bot submissions, referral links, or advertising.</li>
+          <li><strong>Absolutely no NSFW content</strong> — Explicit, pornographic, sexually graphic, or gore material is strictly forbidden.</li>
+          <li><strong>English only – no exceptions</strong> — All publicly posted comments must be written in English to ensure transparent moderation.</li>
+          <li><strong>No impersonation, harassment, or abuse</strong> — Harassment, targeted hostility, or pretending to be team members is prohibited.</li>
+          <li><strong>No illegal content or extreme disrespect towards any fandom</strong> — Discussions must remain civil and conform to applicable laws.</li>
+          <li><strong>Do not request or share repositories or extensions</strong> — Conversations must remain focused on the media itself, not extension piracy or repo links.</li>
+          <li><strong>Spoilers allowed only with spoiler tags and a warning</strong> — Spoilers must be enclosed within tags (<code>~!spoiler text!~</code> or <code>||spoiler text||</code>) and clearly prefixed with a warning.</li>
+          <li><strong>No sexualizing or inappropriate comments about minor characters</strong> — Results in immediate permanent ban without appeal.</li>
+          <li><strong>If it's wrong, don't post it!</strong> — Maintain common decency and appropriate conduct.</li>
+        </ol>
+
+        <h2 id="universal-headers">Universal Headers <a class="header-anchor" href="#universal-headers" aria-label="Permalink to &quot;Universal Headers&quot;">#</a></h2>
+        <p>
+          All requests dispatched to <code>https://api.dantotsu.app</code> require the client application handshake header. Authenticated requests also include the authorization session key.
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Header</th>
+              <th>Value</th>
+              <th>Requirement</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>appauth</code></td>
+              <td><code>6*45Qp%W2RS@t38jkXoSKY588Ynj%n</code></td>
+              <td>Required on every request</td>
+            </tr>
+            <tr>
+              <td><code>Authorization</code></td>
+              <td><code>&lt;authToken&gt;</code></td>
+              <td>Required for mutations, voting, profile & notifications</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="warning custom-block">
+          <p class="custom-block-title">Authorization Format</p>
+          <p>
+            Pass the raw token string directly in the <code>Authorization</code> header without any <code>Bearer</code> prefix. Additionally, note that boolean values in responses (such as <code>is_banned</code>, <code>is_mod</code>, <code>is_admin</code>, and <code>deleted</code>) are returned as integers: <code>1</code> for true and <code>0</code> for false.
+          </p>
+        </div>
+
+        <h2 id="authentication">Authentication <a class="header-anchor" href="#authentication" aria-label="Permalink to &quot;Authentication&quot;">#</a></h2>
+        <p>
+          To authenticate, exchange a valid AniList OAuth access token with the authentication endpoint.
+        </p>
+
+        <h3>Exchange AniList Token</h3>
+        <p><code>POST https://api.dantotsu.app/authenticate</code></p>
+        
+        <div class="code-block-wrapper">
+          <span class="code-lang-label">bash</span>
+          <button class="code-copy-btn" onclick="copyCode(this)" title="Copy code">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          </button>
+          <pre><code>curl -X POST "https://api.dantotsu.app/authenticate" \
+  -H "appauth: 6*45Qp%W2RS@t38jkXoSKY588Ynj%n" \
+  -d "token=ANILIST_OAUTH_TOKEN"</code></pre>
+        </div>
+
+        <p><strong>Response (200 OK)</strong></p>
+        <div class="code-block-wrapper">
+          <span class="code-lang-label">json</span>
+          <pre><code>{
+  "authToken": "eyJhbGciOi...",
+  "user": {
+    "user_id": "123456",
+    "username": "ErenJaeger",
+    "profile_picture_url": "https://s4.anilist.co/file/anilistcdn/user/avatar/...",
+    "is_banned": 0,
+    "is_mod": 0,
+    "is_admin": 0,
+    "total_votes": 12,
+    "warnings": 0
+  }
+}</code></pre>
+        </div>
+
+        <h2 id="endpoints">API Reference <a class="header-anchor" href="#endpoints" aria-label="Permalink to &quot;API Reference&quot;">#</a></h2>
+
+        <h3 id="get-comments">Fetch Comments</h3>
+        <p><code>GET https://api.dantotsu.app/comments/:media_id/:page</code></p>
+        <p>Retrieves paginated comments for a specific AniList media entry.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Parameter</th>
+              <th>Type</th>
+              <th>In</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>media_id</code></td>
+              <td>integer</td>
+              <td>Path</td>
+              <td>AniList Media ID (e.g. <code>16498</code>)</td>
+            </tr>
+            <tr>
+              <td><code>page</code></td>
+              <td>integer</td>
+              <td>Path</td>
+              <td>Page number (1-indexed)</td>
+            </tr>
+            <tr>
+              <td><code>tag</code></td>
+              <td>integer</td>
+              <td>Query</td>
+              <td>Optional episode or chapter number filter (e.g. <code>?tag=1</code>)</td>
+            </tr>
+            <tr>
+              <td><code>sort</code></td>
+              <td>string</td>
+              <td>Query</td>
+              <td><code>newest</code>, <code>oldest</code>, <code>highest_rated</code>, or <code>lowest_rated</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="code-block-wrapper">
+          <span class="code-lang-label">json</span>
+          <pre><code>{
+  "comments": [
+    {
+      "comment_id": 48210,
+      "user_id": "123456",
+      "media_id": 16498,
+      "parent_comment_id": null,
+      "content": "Incredible production value on this episode.",
+      "timestamp": "2024-03-20T14:32:00.000Z",
+      "deleted": 0,
+      "tag": 1,
+      "upvotes": 45,
+      "downvotes": 2,
+      "user_vote_type": 1,
+      "username": "ErenJaeger",
+      "profile_picture_url": "https://...",
+      "is_mod": 0,
+      "is_admin": 0,
+      "reply_count": 3,
+      "total_votes": 43
+    }
+  ],
+  "totalPages": 5
+}</code></pre>
+        </div>
+
+        <h3 id="get-replies">Fetch Thread Replies</h3>
+        <p><code>GET https://api.dantotsu.app/comments/parent/:parent_comment_id/:page</code></p>
+        <p>Returns paginated replies submitted under a specified root comment.</p>
+
+        <h3 id="post-comment">Post Comment or Reply</h3>
+        <p><code>POST https://api.dantotsu.app/comments</code></p>
+        <p>Submits a new top-level comment or threaded reply. Requires authentication.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>Type</th>
+              <th>Required</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>user_id</code></td>
+              <td>string</td>
+              <td>Yes</td>
+              <td>User ID from authentication</td>
+            </tr>
+            <tr>
+              <td><code>media_id</code></td>
+              <td>integer</td>
+              <td>Yes</td>
+              <td>AniList Media ID</td>
+            </tr>
+            <tr>
+              <td><code>content</code></td>
+              <td>string</td>
+              <td>Yes</td>
+              <td>Markdown body text (supports <code>~!spoiler!~</code> syntax)</td>
+            </tr>
+            <tr>
+              <td><code>tag</code></td>
+              <td>integer</td>
+              <td>No</td>
+              <td>Episode or chapter index tag</td>
+            </tr>
+            <tr>
+              <td><code>parent_comment_id</code></td>
+              <td>integer</td>
+              <td>No</td>
+              <td>Target comment ID if creating a reply</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 id="vote-comment">Vote on Comment</h3>
+        <p><code>POST https://api.dantotsu.app/comments/vote/:comment_id/:vote_type</code></p>
+        <p>Casts or clears an upvote or downvote for the authenticated user.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>vote_type</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>1</code></td>
+              <td>Upvote comment</td>
+            </tr>
+            <tr>
+              <td><code>-1</code></td>
+              <td>Downvote comment</td>
+            </tr>
+            <tr>
+              <td><code>0</code></td>
+              <td>Remove existing vote / reset to neutral</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 id="edit-delete">Edit & Delete</h3>
+        <p><code>PUT https://api.dantotsu.app/comments/:comment_id</code></p>
+        <p>Updates comment body with form-encoded field <code>content</code>.</p>
+        <p><code>DELETE https://api.dantotsu.app/comments/:comment_id</code></p>
+        <p>Soft-deletes the comment, masking the contents in listings.</p>
+
+        <h3 id="report-comment">Report Violation</h3>
+        <p><code>POST https://api.dantotsu.app/report/:comment_id</code></p>
+        <p>Dispatches a violation report to moderators with form body fields: <code>username</code>, <code>mediaName</code>, <code>reporter</code>, and <code>reportedId</code>.</p>
+
+        <h3 id="notifications">Notifications</h3>
+        <p><code>GET https://api.dantotsu.app/notification/reply</code></p>
+        <p>Returns pending notifications when other members reply to the user's comments.</p>
+
+        <h2 id="client-implementation">Client Implementation <a class="header-anchor" href="#client-implementation" aria-label="Permalink to &quot;Client Implementation&quot;">#</a></h2>
+        <p>
+          The complete, typed TypeScript client below can be copied directly as a single file into any application.
+        </p>
+
+        <div class="code-block-wrapper">
+          <span class="code-lang-label">ts</span>
+          <button class="code-copy-btn" onclick="copyCode(this)" title="Copy code">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          </button>
+          <pre><code>/**
+ * Dantotsu Comments API Client
+ * Single-file implementation for Web, React Native, and Node.js.
+ */
+
+export interface DantotsuComment {
+  comment_id: number;
+  user_id: string;
+  media_id: number;
+  parent_comment_id: number | null;
+  content: string;
+  timestamp: string;
+  deleted: number;
+  tag: number | null;
+  upvotes: number;
+  downvotes: number;
+  user_vote_type: number | null;
+  username: string;
+  profile_picture_url: string | null;
+  is_mod?: number;
+  is_admin?: number;
+  reply_count?: number;
+  total_votes: number;
+}
+
+export interface DantotsuUser {
+  user_id: string;
+  username: string;
+  profile_picture_url: string | null;
+  is_banned?: number;
+  is_mod?: number;
+  is_admin?: number;
+  total_votes: number;
+  warnings: number;
+}
+
+export class DantotsuCommentsClient {
+  private readonly baseUrl = "https://api.dantotsu.app";
+  private readonly appAuthKey = "6*45Qp%W2RS@t38jkXoSKY588Ynj%n";
+  public authToken: string | null = null;
+  public currentUser: DantotsuUser | null = null;
+
+  private getHeaders(): Record&lt;string, string&gt; {
+    const headers: Record&lt;string, string&gt; = {
+      appauth: this.appAuthKey,
+    };
+    if (this.authToken) {
+      headers["Authorization"] = this.authToken;
+    }
+    return headers;
+  }
+
+  /** Authenticate using an AniList OAuth access token */
+  async authenticate(anilistToken: string): Promise&lt;DantotsuUser&gt; {
+    const body = new URLSearchParams({ token: anilistToken });
+    const res = await fetch(`${this.baseUrl}/authenticate`, {
+      method: "POST",
+      headers: this.getHeaders(),
+      body,
+    });
+    if (!res.ok) throw new Error(`Authentication failed with status ${res.status}`);
+    const data = await res.json();
+    this.authToken = data.authToken;
+    this.currentUser = data.user;
+    return data.user;
+  }
+
+  /** Retrieve comments for an AniList media item */
+  async getComments(
+    mediaId: number,
+    page: number = 1,
+    options?: { tag?: number; sort?: "newest" | "oldest" | "highest_rated" | "lowest_rated" }
+  ): Promise&lt;{ comments: DantotsuComment[]; totalPages: number }&gt; {
+    const params = new URLSearchParams();
+    if (options?.tag !== undefined) params.set("tag", options.tag.toString());
+    if (options?.sort) params.set("sort", options.sort);
+    const query = params.toString() ? `?${params.toString()}` : "";
+
+    const res = await fetch(`${this.baseUrl}/comments/${mediaId}/${page}${query}`, {
+      headers: this.getHeaders(),
+    });
+    if (!res.ok) throw new Error("Failed to fetch comments");
+    return res.json();
+  }
+
+  /** Retrieve replies for a specific parent comment */
+  async getReplies(
+    parentId: number,
+    page: number = 1
+  ): Promise&lt;{ comments: DantotsuComment[]; totalPages: number }&gt; {
+    const res = await fetch(`${this.baseUrl}/comments/parent/${parentId}/${page}`, {
+      headers: this.getHeaders(),
+    });
+    if (!res.ok) throw new Error("Failed to fetch replies");
+    return res.json();
+  }
+
+  /** Create a new comment or reply */
+  async postComment(
+    mediaId: number,
+    content: string,
+    tag?: number,
+    parentCommentId?: number
+  ): Promise&lt;any&gt; {
+    if (!this.currentUser) throw new Error("User must be authenticated to comment");
+    const body = new URLSearchParams({
+      user_id: this.currentUser.user_id,
+      media_id: mediaId.toString(),
+      content,
+    });
+    if (tag !== undefined) body.set("tag", tag.toString());
+    if (parentCommentId !== undefined) body.set("parent_comment_id", parentCommentId.toString());
+
+    const res = await fetch(`${this.baseUrl}/comments`, {
+      method: "POST",
+      headers: this.getHeaders(),
+      body,
+    });
+    if (!res.ok) throw new Error("Failed to post comment");
+    return res.json();
+  }
+
+  /** Vote on comment: 1 = upvote, -1 = downvote, 0 = reset */
+  async vote(commentId: number, voteType: 1 | -1 | 0): Promise&lt;boolean&gt; {
+    const res = await fetch(`${this.baseUrl}/comments/vote/${commentId}/${voteType}`, {
+      method: "POST",
+      headers: this.getHeaders(),
+    });
+    return res.ok;
+  }
+
+  /** Edit comment */
+  async editComment(commentId: number, content: string): Promise&lt;boolean&gt; {
+    const body = new URLSearchParams({ content });
+    const res = await fetch(`${this.baseUrl}/comments/${commentId}`, {
+      method: "PUT",
+      headers: this.getHeaders(),
+      body,
+    });
+    return res.ok;
+  }
+
+  /** Delete comment */
+  async deleteComment(commentId: number): Promise&lt;boolean&gt; {
+    const res = await fetch(`${this.baseUrl}/comments/${commentId}`, {
+      method: "DELETE",
+      headers: this.getHeaders(),
+    });
+    return res.ok;
+  }
+}</code></pre>
+        </div>
+
+        <div class="page-footer">
+          <a class="pager-link" href="#endpoints">
+            <span class="pager-desc">Next page</span>
+            <span class="pager-title">API Reference</span>
+          </a>
+        </div>
+
+      </main>
+    </div>
+
+    <!-- Right TOC Outline -->
+    <div class="aside-container">
+      <div class="outline-title">On this page</div>
+      <ul class="outline-list">
+        <li><a class="outline-link" href="#introduction">Introduction</a></li>
+        <li><a class="outline-link" href="#accuracy-above-all">Platform Architecture</a></li>
+        <li><a class="outline-link" href="#commenting-rules">Commenting Rules</a></li>
+        <li><a class="outline-link" href="#universal-headers">Universal Headers</a></li>
+        <li><a class="outline-link" href="#authentication">Authentication</a></li>
+        <li><a class="outline-link" href="#endpoints">API Reference</a></li>
+        <li><a class="outline-link" href="#client-implementation">Client Implementation</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    function copyCode(btn) {
+      const wrapper = btn.closest('.code-block-wrapper');
+      const code = wrapper.querySelector('pre code').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        const originalSvg = btn.innerHTML;
+        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+        setTimeout(() => {
+          btn.innerHTML = originalSvg;
+        }, 2000);
+      });
+    }
+
+    // Scroll spy for outline and sidebar
+    window.addEventListener('scroll', () => {
+      const headings = document.querySelectorAll('h1, h2, h3');
+      let currentId = '';
+      headings.forEach(h => {
+        const top = h.offsetTop - 100;
+        if (window.pageYOffset >= top) {
+          currentId = h.getAttribute('id');
+        }
+      });
+      if (currentId) {
+        document.querySelectorAll('.outline-link').forEach(link => {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + currentId);
+        });
+      }
+    });
+  </script>
+</body>
+</html>
