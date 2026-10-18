@@ -83,6 +83,7 @@
     .nav-container {
       width: 100%;
       max-width: 1440px;
+      height: 100%;
       margin: 0 auto;
       display: flex;
       align-items: center;
@@ -93,10 +94,11 @@
       display: flex;
       align-items: center;
       gap: 32px;
+      height: 100%;
     }
 
     .nav-title {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 10px;
       text-decoration: none;
@@ -104,23 +106,19 @@
       font-weight: 600;
       font-size: 15px;
       letter-spacing: -0.01em;
+      line-height: 1;
     }
 
-    .logo-badge {
-      width: 24px;
-      height: 24px;
-      background-color: var(--vp-c-brand);
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-weight: 700;
-      font-size: 14px;
+    .logo-img {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      object-fit: contain;
+      display: block;
     }
 
     .nav-search {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 8px;
       background-color: var(--vp-c-bg-alt);
@@ -131,6 +129,7 @@
       font-size: 13px;
       cursor: pointer;
       user-select: none;
+      line-height: 1;
     }
 
     .nav-search kbd {
@@ -143,11 +142,28 @@
       font-family: var(--vp-font-mono);
     }
 
+    .nav-right {
+      display: flex;
+      align-items: center;
+      height: 100%;
+    }
+
     .nav-links {
       display: flex;
       align-items: center;
-      gap: 20px;
+      gap: 24px;
       list-style: none;
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+
+    .nav-links li {
+      display: flex;
+      align-items: center;
+      margin: 0;
+      padding: 0;
+      height: 100%;
     }
 
     .nav-link {
@@ -156,50 +172,14 @@
       font-size: 14px;
       font-weight: 500;
       transition: color 0.2s;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 4px;
+      line-height: 1;
     }
 
     .nav-link:hover, .nav-link.active {
       color: var(--vp-c-brand);
-    }
-
-    .nav-right {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .icon-link {
-      color: var(--vp-c-text-2);
-      display: flex;
-      align-items: center;
-      transition: color 0.2s;
-    }
-
-    .icon-link:hover {
-      color: var(--vp-c-text-1);
-    }
-
-    .theme-switch {
-      background: var(--vp-c-bg-alt);
-      border: 1px solid var(--vp-c-border);
-      border-radius: 14px;
-      width: 40px;
-      height: 22px;
-      display: flex;
-      align-items: center;
-      padding: 2px;
-      cursor: pointer;
-    }
-
-    .theme-switch-knob {
-      width: 16px;
-      height: 16px;
-      background: #fff;
-      border-radius: 50%;
-      margin-left: auto;
     }
 
     /* Layout Columns */
@@ -235,6 +215,8 @@
 
     .sidebar-items {
       list-style: none;
+      margin: 0;
+      padding: 0;
     }
 
     .sidebar-link {
@@ -292,6 +274,7 @@
       list-style: none;
       border-left: 1px solid var(--vp-c-border);
       padding-left: 12px;
+      margin: 0;
     }
 
     .outline-link {
@@ -410,13 +393,13 @@
       margin-bottom: 0;
     }
 
-    /* Lists */
-    ol, ul {
+    /* Scoped document lists */
+    .vp-doc ol, .vp-doc ul {
       padding-left: 24px;
       margin-bottom: 20px;
     }
 
-    li {
+    .vp-doc li {
       margin-bottom: 8px;
       line-height: 26px;
       color: var(--vp-c-text-1);
@@ -521,43 +504,6 @@
       border-bottom: none;
     }
 
-    /* Footer Prev/Next */
-    .page-footer {
-      margin-top: 64px;
-      padding-top: 24px;
-      border-top: 1px solid var(--vp-c-border);
-      display: flex;
-      justify-content: flex-end;
-    }
-
-    .pager-link {
-      border: 1px solid var(--vp-c-border);
-      border-radius: 8px;
-      padding: 12px 18px;
-      text-align: right;
-      text-decoration: none;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      transition: border-color 0.2s;
-    }
-
-    .pager-link:hover {
-      border-color: var(--vp-c-brand);
-      text-decoration: none;
-    }
-
-    .pager-desc {
-      font-size: 12px;
-      color: var(--vp-c-text-3);
-    }
-
-    .pager-title {
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--vp-c-brand);
-    }
-
     @media (max-width: 1100px) {
       .aside-container {
         display: none;
@@ -587,7 +533,7 @@
     <div class="nav-container">
       <div class="nav-left">
         <a class="nav-title" href="/">
-          <div class="logo-badge">D</div>
+          <img class="logo-img" src="https://raw.githubusercontent.com/itsmechinmoy/Dantotsu/refs/heads/main/app/src/main/ic_launcher-playstore.png" alt="Dantotsu Logo">
           <span>Dantotsu API Docs</span>
         </a>
         <div class="nav-search">
@@ -603,12 +549,6 @@
           <li><a class="nav-link" href="https://anilist.co" target="_blank" rel="noreferrer">AniList <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></li>
           <li><a class="nav-link" href="https://github.com/itsmechinmoy/dantotsu" target="_blank" rel="noreferrer">Dantotsu <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></li>
         </ul>
-        <div class="theme-switch" title="Appearance">
-          <div class="theme-switch-knob"></div>
-        </div>
-        <a class="icon-link" href="https://raw.githubusercontent.com/itsmechinmoy/Dantotsu/refs/heads/main/app/src/main/ic_launcher-playstore.png" target="_blank" rel="noreferrer" aria-label="GitHub">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-        </a>
       </div>
     </div>
   </header>
@@ -620,21 +560,26 @@
         <div class="sidebar-group-title">Introduction</div>
         <ul class="sidebar-items">
           <li><a class="sidebar-link active" href="#introduction">What is Comment DB?</a></li>
+          <li><a class="sidebar-link" href="#platform-architecture">Platform Architecture</a></li>
           <li><a class="sidebar-link" href="#commenting-rules">Commenting Rules</a></li>
           <li><a class="sidebar-link" href="#universal-headers">Universal Headers</a></li>
           <li><a class="sidebar-link" href="#authentication">Authentication</a></li>
+          <li><a class="sidebar-link" href="#data-models">Data Models</a></li>
         </ul>
       </div>
       <div class="sidebar-group">
         <div class="sidebar-group-title">API Reference</div>
         <ul class="sidebar-items">
-          <li><a class="sidebar-link" href="#get-comments">Fetch Comments</a></li>
+          <li><a class="sidebar-link" href="#get-comments">Fetch Media Comments</a></li>
           <li><a class="sidebar-link" href="#get-replies">Fetch Thread Replies</a></li>
+          <li><a class="sidebar-link" href="#get-single-comment">Fetch Single Comment</a></li>
+          <li><a class="sidebar-link" href="#get-user">Current User Profile</a></li>
           <li><a class="sidebar-link" href="#post-comment">Post Comment or Reply</a></li>
           <li><a class="sidebar-link" href="#vote-comment">Vote on Comment</a></li>
           <li><a class="sidebar-link" href="#edit-delete">Edit & Delete</a></li>
           <li><a class="sidebar-link" href="#report-comment">Report Violation</a></li>
           <li><a class="sidebar-link" href="#notifications">Notifications</a></li>
+          <li><a class="sidebar-link" href="#rate-limiting">Rate Limiting & Best Practices</a></li>
         </ul>
       </div>
       <div class="sidebar-group">
@@ -654,9 +599,9 @@
           Dantotsu Comment DB is a unified, shared community discussion service built for anime and manga applications. Comments and reply threads are indexed directly by <strong>AniList Media IDs</strong>, allowing users across different clients to interact, post episode or chapter discussions, vote, and receive reply notifications.
         </p>
 
-        <h2 id="accuracy-above-all">Platform Architecture <a class="header-anchor" href="#accuracy-above-all" aria-label="Permalink to &quot;Platform Architecture&quot;">#</a></h2>
+        <h2 id="platform-architecture">Platform Architecture <a class="header-anchor" href="#platform-architecture" aria-label="Permalink to &quot;Platform Architecture&quot;">#</a></h2>
         <p>
-          The service operates over standard HTTP with form-encoded mutation payloads and JSON responses. User authentication is verified cryptographically using legitimate AniList OAuth credentials, ensuring user identity consistency and spam resistance across the ecosystem.
+          The service operates over standard HTTP with form-encoded mutation payloads and JSON responses. Every comment receives a globally unique, sequential integer <code>comment_id</code> across all media. User authentication is verified cryptographically using legitimate AniList OAuth credentials, ensuring user identity consistency and spam resistance across the ecosystem.
         </p>
 
         <h2 id="commenting-rules">Commenting Rules <a class="header-anchor" href="#commenting-rules" aria-label="Permalink to &quot;Commenting Rules&quot;">#</a></h2>
@@ -712,15 +657,15 @@
         </table>
 
         <div class="warning custom-block">
-          <p class="custom-block-title">Authorization Format</p>
+          <p class="custom-block-title">Authorization Format & Data Types</p>
           <p>
-            Pass the raw token string directly in the <code>Authorization</code> header without any <code>Bearer</code> prefix. Additionally, note that boolean values in responses (such as <code>is_banned</code>, <code>is_mod</code>, <code>is_admin</code>, and <code>deleted</code>) are returned as integers: <code>1</code> for true and <code>0</code> for false.
+            Pass the raw token string directly in the <code>Authorization</code> header without any <code>Bearer</code> prefix. Note that boolean values in responses (such as <code>is_banned</code>, <code>is_mod</code>, <code>is_admin</code>, and <code>deleted</code>) are returned as integers: <code>1</code> for true and <code>0</code> for false.
           </p>
         </div>
 
         <h2 id="authentication">Authentication <a class="header-anchor" href="#authentication" aria-label="Permalink to &quot;Authentication&quot;">#</a></h2>
         <p>
-          To authenticate, exchange a valid AniList OAuth access token with the authentication endpoint.
+          To authenticate, exchange a valid AniList OAuth access token with the authentication endpoint. Issued tokens remain valid for approximately 6 days.
         </p>
 
         <h3>Exchange AniList Token</h3>
@@ -754,11 +699,113 @@
 }</code></pre>
         </div>
 
+        <h2 id="data-models">Data Models <a class="header-anchor" href="#data-models" aria-label="Permalink to &quot;Data Models&quot;">#</a></h2>
+
+        <h3>Comment Object</h3>
+        <p>The standard comment schema returned by comments listings, reply threads, and single-comment queries:</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>Type</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>comment_id</code></td>
+              <td>integer</td>
+              <td>Unique sequential ID assigned to the comment.</td>
+            </tr>
+            <tr>
+              <td><code>user_id</code></td>
+              <td>string</td>
+              <td>AniList User ID of the author.</td>
+            </tr>
+            <tr>
+              <td><code>media_id</code></td>
+              <td>integer</td>
+              <td>AniList Media ID of the anime or manga.</td>
+            </tr>
+            <tr>
+              <td><code>parent_comment_id</code></td>
+              <td>integer | null</td>
+              <td>Target comment ID if this is a thread reply, or <code>null</code> if top-level.</td>
+            </tr>
+            <tr>
+              <td><code>content</code></td>
+              <td>string</td>
+              <td>Markdown body text. If deleted, this contains <code>[deleted]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>timestamp</code></td>
+              <td>string</td>
+              <td>ISO-8601 formatted publication timestamp.</td>
+            </tr>
+            <tr>
+              <td><code>deleted</code></td>
+              <td>integer</td>
+              <td><code>1</code> if deleted by author or moderation, otherwise <code>0</code>.</td>
+            </tr>
+            <tr>
+              <td><code>tag</code></td>
+              <td>integer | null</td>
+              <td>Episode or chapter index number, or <code>null</code>.</td>
+            </tr>
+            <tr>
+              <td><code>upvotes</code></td>
+              <td>integer</td>
+              <td>Total positive votes received.</td>
+            </tr>
+            <tr>
+              <td><code>downvotes</code></td>
+              <td>integer</td>
+              <td>Total negative votes received.</td>
+            </tr>
+            <tr>
+              <td><code>user_vote_type</code></td>
+              <td>integer | null</td>
+              <td>Current user's vote state: <code>1</code> (upvote), <code>-1</code> (downvote), or <code>0</code> / <code>null</code> (neutral).</td>
+            </tr>
+            <tr>
+              <td><code>username</code></td>
+              <td>string</td>
+              <td>Author username (may also appear under <code>user.username</code>).</td>
+            </tr>
+            <tr>
+              <td><code>profile_picture_url</code></td>
+              <td>string | null</td>
+              <td>Avatar URL (may also appear under <code>user.profile_picture_url</code>).</td>
+            </tr>
+            <tr>
+              <td><code>is_mod</code></td>
+              <td>integer</td>
+              <td><code>1</code> if author is a moderator, otherwise <code>0</code>.</td>
+            </tr>
+            <tr>
+              <td><code>is_admin</code></td>
+              <td>integer</td>
+              <td><code>1</code> if author is an administrator, otherwise <code>0</code>.</td>
+            </tr>
+            <tr>
+              <td><code>reply_count</code></td>
+              <td>integer</td>
+              <td>Total direct replies posted under this comment.</td>
+            </tr>
+            <tr>
+              <td><code>total_votes</code></td>
+              <td>integer</td>
+              <td>Cumulative author voting karma.</td>
+            </tr>
+          </tbody>
+        </table>
+
         <h2 id="endpoints">API Reference <a class="header-anchor" href="#endpoints" aria-label="Permalink to &quot;API Reference&quot;">#</a></h2>
 
-        <h3 id="get-comments">Fetch Comments</h3>
+        <h3 id="get-comments">Fetch Media Comments</h3>
         <p><code>GET https://api.dantotsu.app/comments/:media_id/:page</code></p>
-        <p>Retrieves paginated comments for a specific AniList media entry.</p>
+        <p>Retrieves paginated comments for an AniList media item. When all available pages have been consumed, <code>comments</code> returns an empty array <code>[]</code>.</p>
 
         <table>
           <thead>
@@ -780,7 +827,7 @@
               <td><code>page</code></td>
               <td>integer</td>
               <td>Path</td>
-              <td>Page number (1-indexed)</td>
+              <td>Page number (starts at <code>1</code>)</td>
             </tr>
             <tr>
               <td><code>tag</code></td>
@@ -828,6 +875,30 @@
         <h3 id="get-replies">Fetch Thread Replies</h3>
         <p><code>GET https://api.dantotsu.app/comments/parent/:parent_comment_id/:page</code></p>
         <p>Returns paginated replies submitted under a specified root comment.</p>
+
+        <h3 id="get-single-comment">Fetch Single Comment</h3>
+        <p><code>GET https://api.dantotsu.app/comments/:comment_id</code></p>
+        <p>Fetches a single comment by its unique sequential <code>comment_id</code>. Returns <code>200 OK</code> with the comment object, or <code>404 Not Found</code> if nonexistent.</p>
+
+        <h3 id="get-user">Current User Profile</h3>
+        <p><code>GET https://api.dantotsu.app/user</code></p>
+        <p>Validates session credentials and retrieves current user permissions, ban state, warnings count, and total karma votes.</p>
+
+        <div class="code-block-wrapper">
+          <span class="code-lang-label">json</span>
+          <pre><code>{
+  "user": {
+    "user_id": "123456",
+    "username": "ErenJaeger",
+    "profile_picture_url": "https://...",
+    "is_banned": 0,
+    "is_mod": 0,
+    "is_admin": 0,
+    "total_votes": 42,
+    "warnings": 0
+  }
+}</code></pre>
+        </div>
 
         <h3 id="post-comment">Post Comment or Reply</h3>
         <p><code>POST https://api.dantotsu.app/comments</code></p>
@@ -907,15 +978,27 @@
         <p><code>PUT https://api.dantotsu.app/comments/:comment_id</code></p>
         <p>Updates comment body with form-encoded field <code>content</code>.</p>
         <p><code>DELETE https://api.dantotsu.app/comments/:comment_id</code></p>
-        <p>Soft-deletes the comment, masking the contents in listings.</p>
+        <p>Soft-deletes the comment, masking the contents to <code>[deleted]</code> in feeds.</p>
 
         <h3 id="report-comment">Report Violation</h3>
         <p><code>POST https://api.dantotsu.app/report/:comment_id</code></p>
-        <p>Dispatches a violation report to moderators with form body fields: <code>username</code>, <code>mediaName</code>, <code>reporter</code>, and <code>reportedId</code>.</p>
+        <p>Dispatches a violation report to community moderators with form fields: <code>username</code>, <code>mediaName</code>, <code>reporter</code>, and <code>reportedId</code>.</p>
 
         <h3 id="notifications">Notifications</h3>
         <p><code>GET https://api.dantotsu.app/notification/reply</code></p>
         <p>Returns pending notifications when other members reply to the user's comments.</p>
+
+        <h2 id="rate-limiting">Rate Limiting & Best Practices <a class="header-anchor" href="#rate-limiting" aria-label="Permalink to &quot;Rate Limiting & Best Practices&quot;">#</a></h2>
+        <p>
+          To maintain API stability, rate limits are enforced across endpoints:
+        </p>
+
+        <ul>
+          <li><strong>HTTP 429 Status:</strong> If too many requests are sent in a short window, the server responds with <code>429 Too Many Requests</code>. Clients should wait <strong>30 seconds</strong> before retrying.</li>
+          <li><strong>Throttling:</strong> When performing consecutive queries or iterating through pages, include a delay of at least <strong>150ms–200ms</strong> between requests.</li>
+          <li><strong>Timeouts:</strong> Set HTTP client read timeouts to <strong>15–30 seconds</strong> to handle intermittent high load gracefully.</li>
+          <li><strong>Token Caching:</strong> Cache the <code>authToken</code> locally for its 6-day lifetime and re-verify using <code>GET /user</code> on application launch rather than calling <code>/authenticate</code> repeatedly.</li>
+        </ul>
 
         <h2 id="client-implementation">Client Implementation <a class="header-anchor" href="#client-implementation" aria-label="Permalink to &quot;Client Implementation&quot;">#</a></h2>
         <p>
@@ -994,6 +1077,17 @@ export class DantotsuCommentsClient {
     return data.user;
   }
 
+  /** Retrieve the current authenticated user's profile */
+  async getUser(): Promise&lt;DantotsuUser&gt; {
+    const res = await fetch(`${this.baseUrl}/user`, {
+      headers: this.getHeaders(),
+    });
+    if (!res.ok) throw new Error("Failed to fetch user profile");
+    const data = await res.json();
+    this.currentUser = data.user;
+    return data.user;
+  }
+
   /** Retrieve comments for an AniList media item */
   async getComments(
     mediaId: number,
@@ -1021,6 +1115,16 @@ export class DantotsuCommentsClient {
       headers: this.getHeaders(),
     });
     if (!res.ok) throw new Error("Failed to fetch replies");
+    return res.json();
+  }
+
+  /** Fetch an individual comment by its sequential comment_id */
+  async getSingleComment(commentId: number): Promise&lt;DantotsuComment | null&gt; {
+    const res = await fetch(`${this.baseUrl}/comments/${commentId}`, {
+      headers: this.getHeaders(),
+    });
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error("Failed to fetch comment");
     return res.json();
   }
 
@@ -1077,14 +1181,32 @@ export class DantotsuCommentsClient {
     });
     return res.ok;
   }
-}</code></pre>
-        </div>
 
-        <div class="page-footer">
-          <a class="pager-link" href="#endpoints">
-            <span class="pager-desc">Next page</span>
-            <span class="pager-title">API Reference</span>
-          </a>
+  /** Report rule violation */
+  async reportComment(commentId: number, username: string, mediaName: string, reportedId: string): Promise&lt;boolean&gt; {
+    const body = new URLSearchParams({
+      username,
+      mediaName,
+      reporter: this.currentUser?.username || "unknown",
+      reportedId,
+    });
+    const res = await fetch(`${this.baseUrl}/report/${commentId}`, {
+      method: "POST",
+      headers: this.getHeaders(),
+      body,
+    });
+    return res.ok;
+  }
+
+  /** Fetch reply notifications */
+  async getNotifications(): Promise&lt;any&gt; {
+    const res = await fetch(`${this.baseUrl}/notification/reply`, {
+      headers: this.getHeaders(),
+    });
+    if (!res.ok) throw new Error("Failed to fetch notifications");
+    return res.json();
+  }
+}</code></pre>
         </div>
 
       </main>
@@ -1095,11 +1217,13 @@ export class DantotsuCommentsClient {
       <div class="outline-title">On this page</div>
       <ul class="outline-list">
         <li><a class="outline-link" href="#introduction">Introduction</a></li>
-        <li><a class="outline-link" href="#accuracy-above-all">Platform Architecture</a></li>
+        <li><a class="outline-link" href="#platform-architecture">Platform Architecture</a></li>
         <li><a class="outline-link" href="#commenting-rules">Commenting Rules</a></li>
         <li><a class="outline-link" href="#universal-headers">Universal Headers</a></li>
         <li><a class="outline-link" href="#authentication">Authentication</a></li>
+        <li><a class="outline-link" href="#data-models">Data Models</a></li>
         <li><a class="outline-link" href="#endpoints">API Reference</a></li>
+        <li><a class="outline-link" href="#rate-limiting">Rate Limiting</a></li>
         <li><a class="outline-link" href="#client-implementation">Client Implementation</a></li>
       </ul>
     </div>
