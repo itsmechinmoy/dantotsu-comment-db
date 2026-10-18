@@ -43,7 +43,17 @@
       padding: 0;
     }
 
-    html, body {
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 80px;
+    }
+
+    /* Prevents anchor jumps from landing behind sticky 64px header */
+    [id], h1, h2, h3, h4, section {
+      scroll-margin-top: 80px;
+    }
+
+    body {
       background-color: var(--vp-c-bg);
       color: var(--vp-c-text-1);
       font-family: var(--vp-font-sans);
@@ -51,7 +61,6 @@
       line-height: 1.7;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      scroll-behavior: smooth;
     }
 
     /* Top Nav */
@@ -1123,6 +1132,18 @@ export class DantotsuCommentsClient {
         document.querySelectorAll('.outline-link').forEach(link => {
           link.classList.toggle('active', link.getAttribute('href') === '#' + currentId);
         });
+      }
+    });
+
+    // Handle hash on initial page load if arrived directly via anchor URL
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.location.hash) {
+        const target = document.querySelector(window.location.hash);
+        if (target) {
+          setTimeout(() => {
+            target.scrollIntoView({ behavior: 'smooth' });
+          }, 60);
+        }
       }
     });
   </script>
